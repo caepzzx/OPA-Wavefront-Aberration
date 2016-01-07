@@ -1,4 +1,4 @@
-function main
+%function main
 tic
 clear all;
 %步长初始值设置
