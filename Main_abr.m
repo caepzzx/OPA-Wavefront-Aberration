@@ -1,16 +1,19 @@
-%function main
+% function main
 tic
 clear all;
 %步长初始值设置
 %----------------------------------------------  
+% scale_cal=1.5;
 num=50;                      %时间取样个数
 nstep=50;                    %z－积分步长个数
-nx=128;                      %x－取样个数
-ny=128;                      %y－取样个数
+nwav=50;                    %信号光和闲频光wavelength步长个数
+nx=256;                      %x－取样个数
+ny=256;                      %y－取样个数
 nvar=3;                      %参量方程个数
-t0=3e-9;                     %脉冲宽度：ns
-wvl =8e-9;                   %光谱半极大全宽度:nm
-d0=2.0e-3;                   %光斑直径:m
+t0=40e-12;                     %脉冲宽度：ns
+
+
+d0=38e-3;                   %光斑直径:m
 crstl_L=59.5e-3;             %晶体长度:m
 z1=0;                        %积分起点
 z2=crstl_L;                  %积分终点:m
@@ -68,18 +71,21 @@ W_F=exp(-(X.^2+Y.^2).^20/(1.3*d0/2/log(2)^(0.025))^40);
 E_S_out=E_S0*pulsegenerator(x,y,t,t0,d0,1,1)/sqrt(S_R_index(num/2));
 E_P_out=E_P0*pulsegenerator(x,y,t,t0,d0,5,5)/sqrt(P_R_index);%.*exp(i*0.6*Exy_ph);
 %--------------------------------------------------------------------------
-for k=1:nstep
-    E_P_out(k,:,:)=exp(i*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
+
+for k=1:num 
+    E_P_out(k,:,:)=exp(j*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
 end
+
 %画出信号光、闲置光初始时间波形
 figure(1) 
 subplot(2,2,1)
-I=(1/2*c*ele_c).*P_R_index*E_P_out(:,nx/2,ny/2).*conj(E_P_out(:,nx/2,ny/2));
-plot(t*1e9,I/max(I),'k','LineWidth',1);
+I=(1/2*c*ele_c).*P_R_index*abs(E_P_out(:,nx/2,ny/2).^2);
+plot(t*1e9,I/max(I),'k-.','LineWidth',1);
 xlabel('time (ns)','FontSize',16);ylabel('Normalized intensity','FontSize',16);
 hold on;
-I=(1/2*c*ele_c).*E_S_out(:,nx/2,ny/2).*conj(E_S_out(:,nx/2,ny/2));
-plot(t*1e9,I/max(I),'r','LineWidth',1);
+I=(1/2*c*ele_c).*abs(E_S_out(:,nx/2,ny/2).^2);
+plot(t*1e9,I/max(I),'r-.','LineWidth',1);
+legend('Initial_E_P','Initial_E_S');
 
 %泵浦光、信号光初始能量
 %----------------------------------------------------
@@ -126,14 +132,16 @@ for k=1:1:nstep
         %------------------------------------------------------------------
         %第二步计算参量作用过程
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
-        v=rk4(v,z,ny,h,P_w,S_w(j),I_w(j),K_con(j),dk(j));
+        v=rk4(v,z,ny,h,P_w,S_w(j),I_w(j),K_con_wav(K_con),dk(j));
         E_S_out(j,:,:)=v(1,:,:);
         E_I_out(j,:,:)=v(2,:,:);
         E_P_out(j,:,:)=v(3,:,:);      
     end
-%     [bmx,bmy]=Beam_Quality(x,y,fx,fy,S_wavelength(num/2),E_P_out);
-%     Bmxz(k,:)=bmx;
-%     Bmyz(k,:)=bmy;
+    
+    [bmx,bmy]=Beam_Quality(x,y,fx,fy,S_wavelength(num/2),E_P_out);
+    Bmxz(k,:)=bmx;
+    Bmyz(k,:)=bmy;
+    
     E_S_am(k,:,:)=E_S_out(num/2,:,:);
     E_I_am(k,:,:)=E_I_out(num/2,:,:);
     E_P_am(k,:,:)=E_P_out(num/2,:,:);

@@ -5,6 +5,7 @@ global P_wavelength;%泵浦光波长
 global S_wavelength;%信号光波长
 global I_wavelength;%闲置光波长
 global P_R_index;%泵浦光折射率
+global S_R_index;%信号光折射率[zzx]
 global I_R_index;%闲置光折射率
 global P_O_index;%寻常光折射率
 global P_E_index;%异常光折射率
@@ -13,13 +14,21 @@ global P_angle;%双折射走离角
 global a_S;%信号光吸收系数
 global a_P; %泵浦光吸收系数
 global a_I; %闲置光吸收系数
+global wvl; %光谱半极大全宽度:m
 %常数
 %---------------------------------------------------------------------------------------------
 c=2.99792e+8;
 ele_c=8.8541e-12;%真空电容率
 P_wavelength=532e-9;        %泵浦光波长
+S_wavelength0=1053e-9;      %[zzx]信号光中心波长
+% 
+% lambda0
+% deltav=0.5/duration;
+% deltalambdainv=deltav/3e8;
+% wvl=lambda0^2*deltalambdainv;
 wvl =6.5e-9;    %光谱半极大全宽度:m
-S_wavelength=1./(1/1053e-9+wvl*t/(t0*(1053e-9)^2));      %信号光波长
+R_wvl=3;    %控制考虑的波长范围
+S_wavelength=linspace(S_wavelength0-R_wvl*wvl/2,S_wavelength0+R_wvl*wvl/2,nwav);      %考虑的信号光波长
 P_w=2*pi*c/P_wavelength;    %泵浦光频率
 S_w=2*pi*c./S_wavelength;    %信号光频率
 I_w=P_w-S_w;                %闲置光频率
@@ -30,13 +39,17 @@ P_X_index=sqrt(2.454140+0.011249/((P_wavelength*1e+6)^2-0.011350)-0.014591*(P_wa
 P_Y_index=sqrt(2.539070+0.012711/((P_wavelength*1e+6)^2-0.012523)-0.018540*(P_wavelength*1e+6)^2-2.00*1e-4*(P_wavelength*1e+6)^4);
 P_Z_index=sqrt(2.586179+0.017968/((P_wavelength*1e+6)^2-0.011893)-0.017968*(P_wavelength*1e+6)^2-2.26*1e-4*(P_wavelength*1e+6)^4);
 S_angle=-0.5*pi/180;         %泵浦光与信号光波矢夹角
-P_angle=0.42*pi/180;
+P_angle=0.42*pi/180;          %[zzx]信号光与闲置光波矢夹角
 I_angle = -asin(S_R_index.*I_wavelength./I_R_index./S_wavelength*sin(S_angle));         %泵浦光与闲置光波矢夹角
 P_R_index=(S_R_index(num/2)./S_wavelength(num/2)*cos(S_angle)+I_R_index(num/2)./I_wavelength(num/2).*cos(I_angle(num/2)))*P_wavelength;
 angle=acos(sqrt((1/P_X_index^2-1/P_R_index^2)/(1/P_X_index^2-1/P_Y_index^2)));
 P_R_index=(S_R_index(num/2)./S_wavelength(num/2)*cos(S_angle)+I_R_index(num/2)./I_wavelength(num/2).*cos(I_angle(num/2)))*P_wavelength;
 d_eff=0.98e-12*cos(angle); %参量过程－有效非线性系数
-K_con=S_w./sqrt(P_R_index.*S_R_index.*I_R_index)/c.*d_eff;
+%参量过程中三波的耦合项中的参数[zzx]
+K_con_S=S_w*d_eff./(c*S_R_index.*cos(S_angle));
+K_con_I=I_w*d_eff./(c*I_R_index.*cos(I_angle));
+K_con_P=P_w*d_eff./(c*P_R_index);
+K_con={K_con_S;K_con_I;K_con_P};
 %-------------------------------------------------------------------------------------------------   
 a_S=0.1; %信号光吸收系数
 a_P=0.1; %泵浦光吸收系数
