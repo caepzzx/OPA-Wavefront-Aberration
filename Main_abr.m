@@ -7,14 +7,14 @@ clear all;
 num=50;                      %时间取样个数
 nstep=50;                    %z－积分步长个数
 nwav=50;                    %信号光和闲频光wavelength步长个数
-nx=256;                      %x－取样个数
-ny=256;                      %y－取样个数
+nx=64;                      %x－取样个数
+ny=nx;                      %y－取样个数
 nvar=3;                      %参量方程个数
 t0=40e-12;                     %脉冲宽度：ns
 
 
 d0=38e-3;                   %光斑直径:m
-crstl_L=59.5e-3;             %晶体长度:m
+crstl_L=68e-3;             %晶体长度:m
 z1=0;                        %积分起点
 z2=crstl_L;                  %积分终点:m
 s=2;                         %窗口宽度因子
@@ -72,9 +72,9 @@ E_S_out=E_S0*pulsegenerator(x,y,t,t0,d0,1,1)/sqrt(S_R_index(num/2));
 E_P_out=E_P0*pulsegenerator(x,y,t,t0,d0,5,5)/sqrt(P_R_index);%.*exp(i*0.6*Exy_ph);
 %--------------------------------------------------------------------------
 
-for k=1:num 
-    E_P_out(k,:,:)=exp(j*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
-end
+%for k=1:num 
+   % E_P_out(k,:,:)=exp(j*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
+%end
 
 %画出信号光、闲置光初始时间波形
 figure(1) 
@@ -95,7 +95,7 @@ S_En=trapz(y,squeeze(trapz(x,squeeze(trapz(t,Is,1)),1)))*1000;
 P_En=trapz(y,squeeze(trapz(x,squeeze(trapz(t,Ip,1)),1)))*1000;
 %----------------------------------------------------
 
-%由龙格－库塔法计算波形沿Z轴传播的变化
+%% 由龙格－库塔法计算波形沿Z轴传播的变化
 %--------------------------------------------------------------------------
 zz(1)=z1;
 h=(z2-z1)/nstep;
@@ -132,7 +132,7 @@ for k=1:1:nstep
         %------------------------------------------------------------------
         %第二步计算参量作用过程
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
-        v=rk4(v,z,ny,h,P_w,S_w(j),I_w(j),K_con_wav(K_con),dk(j));
+        v=rk4(v,z,ny,h,P_w,S_w(j),I_w(j),K_con_wav(K_con,j),dk(j));
         E_S_out(j,:,:)=v(1,:,:);
         E_I_out(j,:,:)=v(2,:,:);
         E_P_out(j,:,:)=v(3,:,:);      
@@ -156,7 +156,7 @@ for k=1:1:nstep
     z=z+h;
     zz(k+1)=z; 
 end
-%--------------------------------------------------------------------------
+%% --------------------------------------------------------------------------
 %画出放大后光斑中心处电场强度的时间波形
 figure(1)
 subplot(2,2,1)
@@ -180,7 +180,7 @@ pcolor(x,y,Z);
 colormap jet,shading interp;
 colorbar;
 title('时间积分光斑形状');
-pha=atan2(imag(E_S_out(:,nx/2,ny/2)),real(E_S_out(:,nx/2,ny/2)))/2/pi;
+pha=angle(E_S_out(:,nx/2,ny/2));
 subplot(2,2,4)
 plot(t*1e9,pha,'r');
 title('Phase accumulated in OPA');

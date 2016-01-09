@@ -15,12 +15,23 @@ global a_S;%信号光吸收系数
 global a_P; %泵浦光吸收系数
 global a_I; %闲置光吸收系数
 global wvl; %光谱半极大全宽度:m
+global K_con0; %中心波长处耦合项参数
+global K_con; %不同波长耦合项参数
 %常数
 %---------------------------------------------------------------------------------------------
 c=2.99792e+8;
 ele_c=8.8541e-12;%真空电容率
 P_wavelength=532e-9;        %泵浦光波长
+
+% %
+% %计算闲频光中心波长
+% P_wavelength0=P_wavelength;
 S_wavelength0=1053e-9;      %[zzx]信号光中心波长
+% P_w0=2*pi*c/P_wavelength0;    %泵浦光中心频率
+% S_w0=2*pi*c/S_wavelength0;    %信号光中心频率
+% I_w0=P_w0-S_w0;              %闲置光中心频率
+% I_wavelength0=2*pi*c/I_w0;   %闲置光中心波长 
+
 % 
 % lambda0
 % deltav=0.5/duration;
@@ -43,8 +54,23 @@ P_angle=0.42*pi/180;          %[zzx]信号光与闲置光波矢夹角
 I_angle = -asin(S_R_index.*I_wavelength./I_R_index./S_wavelength*sin(S_angle));         %泵浦光与闲置光波矢夹角
 P_R_index=(S_R_index(num/2)./S_wavelength(num/2)*cos(S_angle)+I_R_index(num/2)./I_wavelength(num/2).*cos(I_angle(num/2)))*P_wavelength;
 angle=acos(sqrt((1/P_X_index^2-1/P_R_index^2)/(1/P_X_index^2-1/P_Y_index^2)));
-P_R_index=(S_R_index(num/2)./S_wavelength(num/2)*cos(S_angle)+I_R_index(num/2)./I_wavelength(num/2).*cos(I_angle(num/2)))*P_wavelength;
 d_eff=0.98e-12*cos(angle); %参量过程－有效非线性系数
+
+%------计算耦合项在中心频率处的参数--------%
+% S_R_index0=sqrt(2.586179+0.013099./((S_wavelength0*1e+6).^2-0.011893)-0.017968*(S_wavelength0*1e+6).^2-(2.26e-4)*(S_wavelength0*1e+6).^4);%信号光在中心频率处折射率(电场强度偏振沿y向）
+% I_R_index0=sqrt(2.586179+0.013099./((I_wavelength0*1e+6).^2-0.011893)-0.017968*(I_wavelength0*1e+6).^2-(2.26e-4)*(I_wavelength0*1e+6).^4);%闲置光在中心频率处折射率(电场强度偏振沿y向）
+% S_angle0=S_angle;
+% I_angle0 = -asin(S_R_index0*I_wavelength0/I_R_index0/S_wavelength0*sin(S_angle0)); %中心频率处泵浦光与闲频光波矢夹角
+% P_R_index0=(S_R_index0./S_wavelength0*cos(S_angle)+I_R_index0./I_wavelength0.*cos(I_angle0))*P_wavelength0;%泵浦光在中心频率处折射率
+% 
+% 
+% K_con_S0=S_w0*d_eff/(c*S_R_index0.*cos(S_angle0));
+% K_con_I0=I_w0*d_eff/(c*I_R_index0.*cos(I_angle0));
+% K_con_P0=P_w0*d_eff/(c*P_R_index0);
+% K_con0=[K_con_S0;K_con_I0;K_con_P0];
+
+%-------------------------------------------------%
+
 %参量过程中三波的耦合项中的参数[zzx]
 K_con_S=S_w*d_eff./(c*S_R_index.*cos(S_angle));
 K_con_I=I_w*d_eff./(c*I_R_index.*cos(I_angle));
