@@ -2,7 +2,10 @@ wx=0.1;
 wy=0.5;
 L=2;
 M=200;
-x=linspace(-L/2,L/2,M);  %x£­×ø±ê
+% x=linspace(-L/2,L/2,M);  %x£­×ø±ê
+dx=L/M;
+x=-L/2:dx:L/2-dx;
+y=x;
 [X,Y]=meshgrid(x,y);
 g=rect(X/(2*wx)).*rect(Y/(2*wy)); %Signal
 figure(1)

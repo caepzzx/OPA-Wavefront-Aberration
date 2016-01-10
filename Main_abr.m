@@ -10,11 +10,11 @@ nwav=50;                    %信号光和闲频光wavelength步长个数
 nx=64;                      %x－取样个数
 ny=nx;                      %y－取样个数
 nvar=3;                      %参量方程个数
-t0=40e-12;                     %脉冲宽度：ns
+t0=60e-12;                     %脉冲宽度：ns
 
 
-d0=38e-3;                   %光斑直径:m
-crstl_L=68e-3;             %晶体长度:m
+d0=20e-3;                   %光斑直径:m
+crstl_L=45e-3;             %晶体长度:m
 z1=0;                        %积分起点
 z2=crstl_L;                  %积分终点:m
 s=2;                         %窗口宽度因子
@@ -25,10 +25,10 @@ E_I0=0;
 %---------------------------------------------------------------------------
 dt=s*t0/num;                %时间取样分辨率
 dx=s*d0/nx;                 %x－取样分辨率
-dy=s*d0/ny;                 %y－取样分辨率
-x=linspace(-s*d0,s*d0,nx);  %x－坐标
-y=linspace(-s*d0,s*d0,ny);  %y－坐标 
-t=linspace(-s*t0,s*t0,num); %t－坐标
+dy=dx;                      %y－取样分辨率
+x=-s*d0/2:dx:s*d0/2-dx;     %x－坐标
+y=x;                        %y－坐标 
+t=-s*t0/2:dt:s*t0/2-dt; %t－坐标
 %全局变量
 %-----------------
 const_LBO;         
@@ -72,9 +72,9 @@ E_S_out=E_S0*pulsegenerator(x,y,t,t0,d0,1,1)/sqrt(S_R_index(num/2));
 E_P_out=E_P0*pulsegenerator(x,y,t,t0,d0,5,5)/sqrt(P_R_index);%.*exp(i*0.6*Exy_ph);
 %--------------------------------------------------------------------------
 
-%for k=1:num 
-   % E_P_out(k,:,:)=exp(j*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
-%end
+for k=1:num 
+   E_P_out(k,:,:)=exp(j*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
+end
 
 %画出信号光、闲置光初始时间波形
 figure(1) 
@@ -88,7 +88,7 @@ plot(t*1e9,I/max(I),'r-.','LineWidth',1);
 legend('Initial_E_P','Initial_E_S');
 
 %泵浦光、信号光初始能量
-%----------------------------------------------------
+
 Is=(1/2*c*S_R_index(num/2)*ele_c).*E_S_out.*conj(E_S_out);
 Ip=(1/2*c*P_R_index*ele_c).*E_P_out.*conj(E_P_out);
 S_En=trapz(y,squeeze(trapz(x,squeeze(trapz(t,Is,1)),1)))*1000;
@@ -174,13 +174,13 @@ for lx=1:1:nx
     end
 end
 Z=Z/max(max(Z));
-%画出光斑形状
+%
 subplot(2,2,3)
 pcolor(x,y,Z);
 colormap jet,shading interp;
 colorbar;
 title('时间积分光斑形状');
-pha=angle(E_S_out(:,nx/2,ny/2));
+pha=imag(log(E_S_out(:,round(nx/2),round(ny/2))));
 subplot(2,2,4)
 plot(t*1e9,pha,'r');
 title('Phase accumulated in OPA');
@@ -189,7 +189,7 @@ hold on
 figure(2)
 subplot(2,2,1)
 title('空间强度调制');
-mesh(X*1e3,Y*1e3,Z)
+mesh(X*1e3,Y*1e3,abs(Z));
 hold on
 subplot(2,2,2)
 E(:,:)=E_S_ph(nstep,:,:);
