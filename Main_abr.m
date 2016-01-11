@@ -13,8 +13,8 @@ nvar=3;                      %参量方程个数
 t0=60e-12;                     %脉冲宽度：ns
 
 
-d0=20e-3;                   %光斑直径:m
-crstl_L=45e-3;             %晶体长度:m
+d0=200e-3;                   %光斑直径:m
+crstl_L=45.5e-3;             %晶体长度:m
 z1=0;                        %积分起点
 z2=crstl_L;                  %积分终点:m
 s=2;                         %窗口宽度因子
@@ -60,7 +60,7 @@ P=zeros(num,1);
 % EXY=normrnd(1,0.0625,nx,ny);% EXY=cos(15*(X+Y)/d0)*pi*2;% EXY=normrnd(1,0.0625,nx,ny);%引入随机噪声
 %畸变波前产生函数
 %-------------------------------------------------------------------------
-Exy_ph=wvf_Gn(x,y,d0,dx);
+Exy_ph=wvf_Gn(x,y,8e-2);
 save('data\ph_abr2.mat','Exy_ph');
 buf=load('data\ph_abr2.mat');
 Exy_ph=buf.Exy_ph;
