@@ -4,14 +4,15 @@ clear all;
 %步长初始值设置
 %----------------------------------------------  
 % scale_cal=1.5;
-num=50;                      %时间取样个数
+num=50;                        %时间取样个数
 nstep=50;                    %z－积分步长个数
 nwav=50;                    %信号光和闲频光wavelength步长个数
 nx=64;                      %x－取样个数
 ny=nx;                      %y－取样个数
 nvar=3;                      %参量方程个数
 t0=60e-12;                     %脉冲宽度：ns
-
+beta2=-1;
+omega=2;
 
 d0=200e-3;                   %光斑直径:m
 crstl_L=45.5e-3;             %晶体长度:m
@@ -128,15 +129,30 @@ for k=1:1:nstep
         E_P_xy=xy_ifft(E_P_xy,x,y);
         E_S_out(j,:,:)=E_S_xy(:,:);
         E_I_out(j,:,:)=E_I_xy(:,:);
-        E_P_out(j,:,:)=E_P_xy(:,:);
-        %------------------------------------------------------------------
-        %第二步计算参量作用过程
+        E_P_out(j,:,:)=E_P_xy(:,:);  
+    end
+        %----------------------------------------------------------------
+        %第二步计算色散的影响
+    
+        dispersion=exp(i*0.5*beta2*omega.^2*h);
+
+        E_S_outw=ifft(E_S_out,[],1).*dispersion;
+        E_I_outw=ifft(E_I_out,[],1).*dispersion;
+        E_P_outw=ifft(E_P_out,[],1).*dispersion;
+        
+        E_S_out=fft(E_S_outw);
+        E_I_out=fft(E_S_outw
+        E_p_out=fft(E_S_outw);
+    
+       %------------------------------------------------------------------
+        %第三步计算参量作用过程
+        for j=1:num
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
         v=rk4(v,z,ny,h,P_w,S_w(j),I_w(j),K_con_wav(K_con,j),dk(j));
         E_S_out(j,:,:)=v(1,:,:);
         E_I_out(j,:,:)=v(2,:,:);
-        E_P_out(j,:,:)=v(3,:,:);      
-    end
+        E_P_out(j,:,:)=v(3,:,:);  
+        end
     
     [bmx,bmy]=Beam_Quality(x,y,fx,fy,S_wavelength(num/2),E_P_out);
     Bmxz(k,:)=bmx;
