@@ -107,41 +107,40 @@ for k=1:1:nstep
 %        S_angle=0.5*pi/180;
 %        I_angle(:)= -asin(S_R_index.*I_wavelength./I_R_index./S_wavelength*sin(S_angle));
 %     end
-    for j=1:1:num
-        %第一步计算走离效应的影响
-        %------------------------------------------------------------------
-        %进行傅立叶变换
-        E_S_xy=squeeze(E_S_out(j,:,:));
-        E_I_xy=squeeze(E_I_out(j,:,:));
-        E_P_xy=squeeze(E_P_out(j,:,:));
-        
-        [E_S_xy,fx,fy]=xy_fft(E_S_xy,x,y);
-        [E_I_xy,fx,fy]=xy_fft(E_I_xy,x,y);
-        [E_P_xy,fx,fy]=xy_fft(E_P_xy,x,y);
-        [FX,FY]=meshgrid(fx,fy); 
-        
-        E_S_xy = E_S_xy.*exp(((S_angle*i*2*pi)*FY-1/2*a_S)*h).*exp(-i*pi*S_wavelength(num/2)/S_R_index(num/2)*(FX.^2+FY.^2)*h);      
-        E_I_xy = E_I_xy.*exp(((I_angle(num/2)*i*2*pi)*FY-1/2*a_I)*h).*exp(-i*pi*I_wavelength(num/2)/I_R_index(num/2)*(FX.^2+FY.^2)*h);     
-        E_P_xy = E_P_xy.*exp(((P_angle*i*2*pi)*FY-1/2*a_P)*h).*exp(-i*pi*P_wavelength/P_R_index*(FX.^2+FY.^2)*h);
-        %进行傅立叶逆变换
-        E_S_xy=xy_ifft(E_S_xy,x,y);
-        E_I_xy=xy_ifft(E_I_xy,x,y);
-        E_P_xy=xy_ifft(E_P_xy,x,y);
-        E_S_out(j,:,:)=E_S_xy(:,:);
-        E_I_out(j,:,:)=E_I_xy(:,:);
-        E_P_out(j,:,:)=E_P_xy(:,:);  
-    end
+%     for j=1:1:num
+%         第一步计算走离效应的影响
+%         ------------------------------------------------------------------
+%         进行傅立叶变换
+%         E_S_xy=squeeze(E_S_out(j,:,:));
+%         E_I_xy=squeeze(E_I_out(j,:,:));
+%         E_P_xy=squeeze(E_P_out(j,:,:));
+%         
+%         [E_S_xy,fx,fy]=xy_fft(E_S_xy,x,y);
+%         [E_I_xy,fx,fy]=xy_fft(E_I_xy,x,y);
+%         [E_P_xy,fx,fy]=xy_fft(E_P_xy,x,y);
+%         [FX,FY]=meshgrid(fx,fy); 
+%         
+%         E_S_xy = E_S_xy.*exp(((S_angle*i*2*pi)*FY-1/2*a_S)*h).*exp(-i*pi*S_wavelength(num/2)/S_R_index(num/2)*(FX.^2+FY.^2)*h);      
+%         E_I_xy = E_I_xy.*exp(((I_angle(num/2)*i*2*pi)*FY-1/2*a_I)*h).*exp(-i*pi*I_wavelength(num/2)/I_R_index(num/2)*(FX.^2+FY.^2)*h);     
+%         E_P_xy = E_P_xy.*exp(((P_angle*i*2*pi)*FY-1/2*a_P)*h).*exp(-i*pi*P_wavelength/P_R_index*(FX.^2+FY.^2)*h);
+%         进行傅立叶逆变换
+%         E_S_xy=xy_ifft(E_S_xy,x,y);
+%         E_I_xy=xy_ifft(E_I_xy,x,y);
+%         E_P_xy=xy_ifft(E_P_xy,x,y);
+%         E_S_out(j,:,:)=E_S_xy(:,:);
+%         E_I_out(j,:,:)=E_I_xy(:,:);
+%         E_P_out(j,:,:)=E_P_xy(:,:);  
+%     end
         %----------------------------------------------------------------
         %第二步计算色散的影响
     
-        dispersion=exp(i*0.5*beta2*omega.^2*h);
 
-        E_S_outw=ifft(E_S_out,[],1).*dispersion;
-        E_I_outw=ifft(E_I_out,[],1).*dispersion;
-        E_P_outw=ifft(E_P_out,[],1).*dispersion;
+        E_S_outw=ifft(E_S_out,[],1).*exp(Cd(1)*(-i*2*pi*c/(S_R_index0*S_wavelength0)*h));
+        E_I_outw=ifft(E_I_out,[],1).*exp(Cd(2)*(-i*2*pi*c/(I_R_index0*I_wavelength0)*h));
+        E_P_outw=ifft(E_P_out,[],1).*exp(Cd(3)*(-i*2*pi*c/(P_R_index0*P_wavelength0)*h));
         
         E_S_out=fft(E_S_outw);
-        E_I_out=fft(E_S_outw
+        E_I_out=fft(E_S_outw);
         E_p_out=fft(E_S_outw);
     
        %------------------------------------------------------------------
@@ -154,9 +153,9 @@ for k=1:1:nstep
         E_P_out(j,:,:)=v(3,:,:);  
         end
     
-    [bmx,bmy]=Beam_Quality(x,y,fx,fy,S_wavelength(num/2),E_P_out);
-    Bmxz(k,:)=bmx;
-    Bmyz(k,:)=bmy;
+%     [bmx,bmy]=Beam_Quality(x,y,fx,fy,S_wavelength(num/2),E_P_out);
+%     Bmxz(k,:)=bmx;
+%     Bmyz(k,:)=bmy;
     
     E_S_am(k,:,:)=E_S_out(num/2,:,:);
     E_I_am(k,:,:)=E_I_out(num/2,:,:);
@@ -176,8 +175,7 @@ end
 %画出放大后光斑中心处电场强度的时间波形
 figure(1)
 subplot(2,2,1)
-I=(abs(E_S_out(:,nx/2,ny/2))).^2*(1/2*c*ele_c).*S_R_index(:);
-plot(t*1e9,I/max(I),'b','LineWidth',1);
+  
 %画出光斑中心处电场强度随Z轴的变化
 subplot(2,2,2)
 plot(zz(1:nstep)*1000,sum_Es,'r','LineWidth',1)

@@ -17,6 +17,8 @@ global a_I; %闲置光吸收系数
 global wvl; %光谱半极大全宽度:m
 global K_con0; %中心波长处耦合项参数
 global K_con; %不同波长耦合项参数
+global Vg; %存储群速度
+global Cd; %存储用于时间频率域讨论色散的参数
 %常数
 %---------------------------------------------------------------------------------------------
 c=2.99792e+8;
@@ -75,7 +77,7 @@ a_S=0.1; %信号光吸收系数
 a_P=0.1; %泵浦光吸收系数
 a_I=0.1; %闲置光吸收系数
 dk=2*pi*(P_R_index/P_wavelength-S_R_index./S_wavelength*cos(S_angle)-I_R_index./I_wavelength.*cos(I_angle));
-Rt=1+1e-5;  %用于设置求波矢导数时波长变化的步长
+Rt=1+1e-6;  %用于设置求波矢导数时波长变化的步长
             %DeltaWavelength=Rt*Wavelength0-Wavelength0
 %------三波在中心频率处的折射率--------%
 S_R_index0=sqrt(2.586179+0.013099./((S_wavelength0*1e+6).^2-0.011893)-0.017968*(S_wavelength0*1e+6).^2-(2.26e-4)*(S_wavelength0*1e+6).^4);%信号光在中心频率处折射率(电场强度偏振沿y向）
@@ -84,14 +86,25 @@ S_angle0=S_angle;
 I_angle0 = -asin(S_R_index0*I_wavelength0/I_R_index0/S_wavelength0*sin(S_angle0)); %中心频率处泵浦光与闲频光波矢夹角
 P_R_index0=(S_R_index0./S_wavelength0*cos(S_angle)+I_R_index0./I_wavelength0.*cos(I_angle0))*P_wavelength0;%泵浦光在中心频率处折射率
 %------三波在波长变化一个小量后对应频率处的折射率--------%
-S_R_index_step=sqrt(2.586179+0.013099./((Rt*S_wavelength0*1e+6).^2-0.011893)-0.017968*(Rt*S_wavelength0*1e+6).^2-(2.26e-4)*(Rt*S_wavelength0*1e+6).^4);%信号光在中心频率处折射率(电场强度偏振沿y向）
-I_R_index_step=sqrt(2.586179+0.013099./((Rt*I_wavelength0*1e+6).^2-0.011893)-0.017968*(Rt*I_wavelength0*1e+6).^2-(2.26e-4)*(Rt*I_wavelength0*1e+6).^4);%闲置光在中心频率处折射率(电场强度偏振沿y向）
-I_angle0 = -asin(S_R_index_step*Rt*I_wavelength0/I_R_index_step/Rt*S_wavelength0*sin(S_angle0)); %中心频率处泵浦光与闲频光波矢夹角
-P_R_index_step=(S_R_index_step./Rt*S_wavelength0*cos(S_angle)+I_R_index_step./Rt*I_wavelength0.*cos(I_angle0))*Rt*P_wavelength0;%泵浦光在中心频率处折射率
+S_R_index_step=sqrt(2.586179+0.013099./((Rt*S_wavelength0*1e+6).^2-0.011893)-0.017968*(Rt*S_wavelength0*1e+6).^2-(2.26e-4)*(Rt*S_wavelength0*1e+6).^4);%信号光在略微偏离中心频率处折射率(电场强度偏振沿y向）
+I_R_index_step=sqrt(2.586179+0.013099./((Rt*I_wavelength0*1e+6).^2-0.011893)-0.017968*(Rt*I_wavelength0*1e+6).^2-(2.26e-4)*(Rt*I_wavelength0*1e+6).^4);%闲置光在略微偏离中心频率处折射率(电场强度偏振沿y向）
+I_angle0 = -asin(S_R_index_step*Rt*I_wavelength0/I_R_index_step/(Rt*S_wavelength0)*sin(S_angle0)); %略微偏离中心频率处泵浦光与闲频光波矢夹角
+P_R_index_step=(S_R_index_step./(Rt*S_wavelength0)*cos(S_angle0)+I_R_index_step./(Rt*I_wavelength0).*cos(I_angle0))*Rt*P_wavelength0;%泵浦光在略微偏离中心频率处折射率
 
+%--------计算三波中心波长处各自的群速度--------------%
+dks=2*pi*S_R_index_step/(Rt*S_wavelength0)-2*pi*S_R_index0/S_wavelength0;
+dws=2*pi*c/(S_R_index_step*Rt*S_wavelength0)-2*pi*c/(S_R_index0*S_wavelength0);
+Vgs=1/(dks/dws);
+dki=2*pi*I_R_index_step/(Rt*I_wavelength0)-2*pi*I_R_index0/I_wavelength0;
+dwi=2*pi*c/(I_R_index_step*Rt*I_wavelength0)-2*pi*c/(I_R_index0*I_wavelength0);
+Vgi=1/(dki/dwi);
+dkp=2*pi*P_R_index_step/(Rt*P_wavelength0)-2*pi*P_R_index0/P_wavelength0;
+dwp=2*pi*c/(P_R_index_step*Rt*P_wavelength0)-2*pi*c/(P_R_index0*P_wavelength0);
+Vgp=1/(dkp/dwp);
+Vg=[Vgs;Vgi;Vgp];
 
-
-dkp=2*pi/(Rt*P_wavelength0)-2*pi/P_wavelength0;
-dwp=2*pi*c/()
-Vgp=
+%以泵浦光的群速度为参考做行波坐标变换，计算用于讨论时间频率域相移的参数
+Cd=[1/Vgs-1/(cos(S_angle0)*Vgs);
+    1/Vgs-1/(cos(I_angle0)*Vgi);    
+    1/Vgs-1/Vgp];
 % plot(t,dk);hold on
