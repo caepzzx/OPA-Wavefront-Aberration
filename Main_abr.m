@@ -29,7 +29,10 @@ dx=s*d0/nx;                 %x－取样分辨率
 dy=dx;                      %y－取样分辨率
 x=-s*d0/2:dx:s*d0/2-dx;     %x－坐标
 y=x;                        %y－坐标 
-t=-s*t0/2:dt:s*t0/2-dt; %t－坐标
+t=-s*t0/2:dt:s*t0/2-dt;     %t－坐标
+w = wspace(t);              % vector of w values
+vs = fftshift(w/(2*pi));    % used for plotting
+
 %全局变量
 %-----------------
 const_LBO;         
@@ -44,9 +47,18 @@ E_P_ph=zeros(num,nx,ny);    %泵浦光波前在参量作用过程中的变化
 E_S_am=zeros(num,nx,ny);    %信号光电场强度在参量作用过程中的变化
 E_I_am=zeros(num,nx,ny);    %闲置光电场强度在参量作用过程中的变化
 E_P_am=zeros(num,nx,ny);    %泵浦光电场强度在参量作用过程中的变化
+E_S_w=zeros(num,nx,ny);
+E_I_w=zeros(num,nx,ny);
+E_P_w=zeros(num,nx,ny);
 E_S_xy=zeros(nx,ny);
 E_I_xy=zeros(nx,ny);
 E_P_xy=zeros(nx,ny);
+E_S_w_dot=zeros(num,1);
+E_I_w_dot=zeros(num,1);
+E_P_w_dot=zeros(num,1);
+S_dispersion=zeros(num,1);
+I_dispersion=zeros(num,1);
+P_dispersion=zeros(num,1);
 Bmxz=zeros(nstep,num);
 Bmxy=zeros(nstep,num);
 bmx=zeros(1,num);
@@ -61,8 +73,8 @@ P=zeros(num,1);
 % EXY=normrnd(1,0.0625,nx,ny);% EXY=cos(15*(X+Y)/d0)*pi*2;% EXY=normrnd(1,0.0625,nx,ny);%引入随机噪声
 %畸变波前产生函数
 %-------------------------------------------------------------------------
-Exy_ph=wvf_Gn(x,y,8e-2);
-save('data\ph_abr2.mat','Exy_ph');
+% Exy_ph=wvf_Gn(x,y,8e-2);
+% save('data\ph_abr2.mat','Exy_ph');
 buf=load('data\ph_abr2.mat');
 Exy_ph=buf.Exy_ph;
 %-------------------------------------------------------------------------
@@ -73,12 +85,12 @@ E_S_out=E_S0*pulsegenerator(x,y,t,t0,d0,1,1)/sqrt(S_R_index(num/2));
 E_P_out=E_P0*pulsegenerator(x,y,t,t0,d0,5,5)/sqrt(P_R_index);%.*exp(i*0.6*Exy_ph);
 %--------------------------------------------------------------------------
 
-for k=1:num 
-   E_P_out(k,:,:)=exp(j*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
-end
+% for k=1:num 
+%    E_P_out(k,:,:)=exp(j*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
+% end
 
 %画出信号光、闲置光初始时间波形
-figure(1) 
+h1=figure; 
 subplot(2,2,1)
 I=(1/2*c*ele_c).*P_R_index*abs(E_P_out(:,nx/2,ny/2).^2);
 plot(t*1e9,I/max(I),'k-.','LineWidth',1);
@@ -107,35 +119,67 @@ for k=1:1:nstep
 %        S_angle=0.5*pi/180;
 %        I_angle(:)= -asin(S_R_index.*I_wavelength./I_R_index./S_wavelength*sin(S_angle));
 %     end
-%     for j=1:1:num
-%         第一步计算走离效应的影响
-%         ------------------------------------------------------------------
-%         进行傅立叶变换
-%         E_S_xy=squeeze(E_S_out(j,:,:));
-%         E_I_xy=squeeze(E_I_out(j,:,:));
-%         E_P_xy=squeeze(E_P_out(j,:,:));
-%         
-%         [E_S_xy,fx,fy]=xy_fft(E_S_xy,x,y);
-%         [E_I_xy,fx,fy]=xy_fft(E_I_xy,x,y);
-%         [E_P_xy,fx,fy]=xy_fft(E_P_xy,x,y);
-%         [FX,FY]=meshgrid(fx,fy); 
-%         
-%         E_S_xy = E_S_xy.*exp(((S_angle*i*2*pi)*FY-1/2*a_S)*h).*exp(-i*pi*S_wavelength(num/2)/S_R_index(num/2)*(FX.^2+FY.^2)*h);      
-%         E_I_xy = E_I_xy.*exp(((I_angle(num/2)*i*2*pi)*FY-1/2*a_I)*h).*exp(-i*pi*I_wavelength(num/2)/I_R_index(num/2)*(FX.^2+FY.^2)*h);     
-%         E_P_xy = E_P_xy.*exp(((P_angle*i*2*pi)*FY-1/2*a_P)*h).*exp(-i*pi*P_wavelength/P_R_index*(FX.^2+FY.^2)*h);
-%         进行傅立叶逆变换
-%         E_S_xy=xy_ifft(E_S_xy,x,y);
-%         E_I_xy=xy_ifft(E_I_xy,x,y);
-%         E_P_xy=xy_ifft(E_P_xy,x,y);
-%         E_S_out(j,:,:)=E_S_xy(:,:);
-%         E_I_out(j,:,:)=E_I_xy(:,:);
-%         E_P_out(j,:,:)=E_P_xy(:,:);  
-%     end
+
+%----------------进行空间频率域变换---------------%
+    for j=1:1:num
+        E_S_xy=squeeze(E_S_out(j,:,:));
+        E_I_xy=squeeze(E_I_out(j,:,:));
+        E_P_xy=squeeze(E_P_out(j,:,:));
+        
+        [E_S_xy,fx,fy]=xy_fft(E_S_xy,x,y);
+        [E_I_xy,fx,fy]=xy_fft(E_I_xy,x,y);
+        [E_P_xy,fx,fy]=xy_fft(E_P_xy,x,y);
+        
+        E_S_w(j,:,:)=E_S_xy(:,:);
+        E_I_w(j,:,:)=E_I_xy(:,:);
+        E_P_w(j,:,:)=E_P_xy(:,:);  
+          
+    end  
+%----------------进行时间频率域变换---------------%
+        E_S_w=ifft(E_S_w,[],1);
+        E_I_w=ifft(E_I_w,[],1);
+        E_P_w=ifft(E_P_w,[],1);
+        
+        [FX,FY]=meshgrid(fx,fy); 
+     for j=1:1:num 
+        E_S_xy=squeeze(E_S_w(j,:,:));
+        E_I_xy=squeeze(E_S_w(j,:,:));
+        E_P_xy=squeeze(E_S_w(j,:,:));
+        E_S_xy = E_S_xy.*exp(((S_angle*i*2*pi)*FY-1/2*a_S)*h/2).*exp(-i*pi*S_wavelength(num/2)/S_R_index(num/2)*(FX.^2+FY.^2)*h/2);      
+        E_I_xy = E_I_xy.*exp(((I_angle(num/2)*i*2*pi)*FY-1/2*a_I)*h/2).*exp(-i*pi*I_wavelength(num/2)/I_R_index(num/2)*(FX.^2+FY.^2)*h/2);     
+        E_P_xy = E_P_xy.*exp(((P_angle*i*2*pi)*FY-1/2*a_P)*h/2).*exp(-i*pi*P_wavelength/P_R_index*(FX.^2+FY.^2)*h/2);
+        E_S_w(j,:,:)=E_S_xy(:,:);
+        E_I_w(j,:,:)=E_I_xy(:,:);
+        E_P_w(j,:,:)=E_P_xy(:,:);  
+     end
+     for i=1:numel(x)
+         for j=1:numel(y)
+           E_S_w_dot=squeeze(E_S_w(:,i,j));
+           E_I_w_dot=squeeze(E_I_w(:,i,j));
+           E_P_w_dot=squeeze(E_P_w(:,i,j));
+         
+         
+         end
+     end
+         
+        
+        
+        
+       
+
+        
+        
+        %         进行傅立叶逆变换
+        E_S_xy=xy_ifft(E_S_xy,x,y);
+        E_I_xy=xy_ifft(E_I_xy,x,y);
+        E_P_xy=xy_ifft(E_P_xy,x,y);
+      
+    end
         %----------------------------------------------------------------
         %第二步计算色散的影响
     
 
-        E_S_outw=ifft(E_S_out,[],1).*exp(Cd(1)*(-i*2*pi*c/(S_R_index0*S_wavelength0)*h));
+        E_S_outw=.*exp(Cd(1)*(-i*2*pi*c/(S_R_index0*S_wavelength0)*h));
         E_I_outw=ifft(E_I_out,[],1).*exp(Cd(2)*(-i*2*pi*c/(I_R_index0*I_wavelength0)*h));
         E_P_outw=ifft(E_P_out,[],1).*exp(Cd(3)*(-i*2*pi*c/(P_R_index0*P_wavelength0)*h));
         
@@ -173,7 +217,7 @@ for k=1:1:nstep
 end
 %% --------------------------------------------------------------------------
 %画出放大后光斑中心处电场强度的时间波形
-figure(1)
+figure(h1)
 subplot(2,2,1)
   
 %画出光斑中心处电场强度随Z轴的变化
@@ -200,7 +244,7 @@ plot(t*1e9,pha,'r');
 title('Phase accumulated in OPA');
 hold on
 %画出参量作用后波前变化
-figure(2)
+figure
 subplot(2,2,1)
 title('空间强度调制');
 mesh(X*1e3,Y*1e3,abs(Z));

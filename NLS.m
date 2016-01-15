@@ -6,8 +6,8 @@ clear all;%
 distance=2;
 beta2=-1;
 N=1;%soliton order
-mshape=1;
-chirp0=3;%input pulse chirp(default value)
+mshape=3;
+chirp0=0;%input pulse chirp(default value)
 
 %---set simulation parameters
 nt=1024;Tmax=32; %FFT points and window size
