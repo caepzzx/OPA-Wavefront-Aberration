@@ -1,0 +1,391 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>opa_main</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-06-10"><meta name="DC.source" content="opa_main.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">&#39044;&#22788;&#29702;</a></li></ul></div><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+</pre><h2>&#39044;&#22788;&#29702;<a name="2"></a></h2><p>1&#23631;&#24149;&#25968;&#25454;&#21021;&#22987;&#21270;</p><pre class="codeinput">close <span class="string">all</span>
+clc
+tic
+<span class="comment">% 2&#21333;&#20301;&#23450;&#20041;</span>
+c=3e8;
+fs=1e-15;
+ps=1e-12;
+nJ=1e-9;
+uj=1e-6;
+mJ=1e-3;
+mm=1e-3;
+cm=1e-2;
+epislon=8.85e-12;
+
+<span class="comment">% 3&#21021;&#22987;&#21270;</span>
+es=69.5*uj;
+ep=300/4*mJ;
+dias=3*mm;
+diap=3*mm;
+ms=1;
+mp=1;
+lamdas0=2.4e-6;
+lamdap=1.053e-6;
+material=<span class="string">'BBO'</span>;
+matchtype=<span class="string">'ooe'</span>;
+type=<span class="string">'o'</span>;
+alpha=3.0648;
+L=10*mm;
+N=2^13;
+dz=L/N;
+
+<span class="comment">% 4&#21021;&#22987;&#21270;&#19977;&#27874;</span>
+tao_ftl=30*fs;
+tao_ps=400*ps;
+tao_pp=1625*ps;
+
+T=3*tao_pp;
+t=linspace(-T/2,T/2,N);
+dt=t(2)-t(1);
+chirp_s=-sqrt((tao_ps/tao_ftl)^2-1);
+tao_gs=tao_ps./sqrt(2*log(2));
+ws0=2*pi*c/lamdas0;
+ws=ws0-2*chirp_s.*t/tao_gs^2;
+chirp_p=0;
+
+lamdas=2*pi*c./ws;
+lamdai0=1./(1./lamdap-1./lamdas0);
+lamdai=1./(1./lamdap-1./lamdas);
+ns0=sellmeier(lamdas0,material,type);
+ni0=sellmeier(lamdai0,material,type);
+ns=sellmeier(lamdas,material,type);
+max(ns)
+ni=sellmeier(lamdai,material,type);
+np=sellmeier(lamdap,material,type);
+[Ats,intenses]=pulse_generator(es,dias,<span class="string">'gauss'</span>,tao_ps,ns0,chirp_s,t,ms);
+[Atp,intensep]=pulse_generator(ep,diap,<span class="string">'supergauss'</span>,tao_pp,np,chirp_p,t,mp);
+<span class="comment">% [Ats,t2,intenses]=SuperGauss2(energy_s,diameter,ns02,tao_ps,Cs,m_s,T,N);</span>
+<span class="comment">% [Atp,t2,intensep]=SuperGauss2(energy_p,diameter,np02,tao_ps,Cs,m_p,T,N);</span>
+subplot(221)
+plot(t*1e12,abs(Ats),<span class="string">'r.'</span>,t*1e12,Atp,<span class="string">'c.'</span>)
+xlabel(<span class="string">'time/ps'</span>)
+ylabel(<span class="string">'At'</span>)
+title(<span class="string">'&#21021;&#22987;&#21270;&#20449;&#21495;&#20809;&#21450;&#27893;&#28006;&#20809;&#25391;&#24133;&#20998;&#24067;'</span>)
+legend(<span class="string">'&#20449;&#21495;&#20809;'</span>,<span class="string">'&#27893;&#28006;&#20809;'</span>)
+subplot(222)
+plot(t*1e12,intenses,<span class="string">'r'</span>,t*1e12,intensep,<span class="string">'c'</span>)
+xlabel(<span class="string">'time/ps'</span>)
+ylabel(<span class="string">'It'</span>)
+title(<span class="string">'&#21021;&#22987;&#21270;&#20449;&#21495;&#20809;&#21450;&#27893;&#28006;&#20809;&#20809;&#24378;&#20998;&#24067;'</span>)
+legend(<span class="string">'&#20449;&#21495;&#20809;'</span>,<span class="string">'&#27893;&#28006;&#20809;'</span>)
+
+subplot(223)
+plot(t*1e12,lamdas*1e6)
+xlabel(<span class="string">'time/ps'</span>)
+ylabel(<span class="string">'\lambda/um'</span>)
+title(<span class="string">'&#21021;&#22987;&#21270;&#20449;&#21495;&#20809;&#20809;&#35889;&#20998;&#24067;'</span>)
+subplot(224)
+plot(lamdas,abs(Ats),<span class="string">'b'</span>)
+ylabel(<span class="string">'Ats'</span>)
+xlabel(<span class="string">'\lambda/um'</span>)
+title(<span class="string">'&#21021;&#22987;&#20449;&#21495;&#20809;&#25391;&#24133;&#20998;&#24067;'</span>)
+<span class="comment">% 5&#30456;&#20301;&#21305;&#37197;&#35282;</span>
+
+theta=pma_theta(N,alpha,lamdas0,lamdap,material,matchtype);
+theta2=theta_calculate(alpha,lamdas,lamdap,material);
+theta3=pma_theta(N,alpha,lamdas,lamdap,material,matchtype);
+
+<span class="comment">% np=sellmeier(lamdap,material,'t',theta);</span>
+wi=2*pi*c./lamdai;
+wp=2*pi*c./lamdap;
+figure(2)
+subplot(121)
+plot(lamdas,theta2,<span class="string">'g*'</span>)
+hold <span class="string">on</span>
+plot(lamdas,theta3,<span class="string">'Linewidth'</span>,2)
+Ati=zeros(1,length(Ats));
+hold <span class="string">on</span>
+plot(lamdas0,theta,<span class="string">'rp'</span>)
+
+<span class="comment">% deff=d_eff(material,matchtype,theta,phi);</span>
+<span class="comment">% plot(lamdas,deff)</span>
+<span class="comment">% deff=abs(deff);</span>
+deff=2.00e-12;
+subplot(122)
+dk2=d_k(alpha,theta,lamdas,lamdap,material,matchtype);
+dk3=deltak_calculate(alpha,theta,lamdas,lamdap,material);
+semilogy(lamdas,abs(dk2*L),<span class="string">'rd'</span>,lamdas,abs(dk3*L),<span class="string">'g.-'</span>)
+xlabel(<span class="string">'lamdas'</span>)
+ylabel(<span class="string">'|dk L|'</span>)
+
+
+dk=zeros(1,length(lamdas));
+<span class="keyword">for</span> i=1:N/32
+    z=(i-.5)*L/(N/32);
+    [Ats,Ati,Atp]=rk45(Ats,Ati,Atp,ws,wi,wp,ns,ni,np,dk2,deff,z,dz);
+<span class="keyword">end</span>
+figure(1)
+subplot(221)
+hold <span class="string">on</span>
+plot(t*1e12,abs(Ats),<span class="string">'g-'</span>,t*1e12,abs(Atp),<span class="string">'b-'</span>,t*1e12,abs(Ati),<span class="string">'m-'</span>)
+legend(<span class="string">'&#25918;&#22823;&#21069;&#20449;&#21495;&#20809;'</span>,<span class="string">'&#25918;&#22823;&#21069;&#27893;&#28006;&#20809;'</span>,<span class="string">'&#25918;&#22823;&#21518;&#20449;&#21495;&#20809;'</span>,<span class="string">'&#25918;&#22823;&#21518;&#27893;&#28006;&#20809;'</span>,<span class="string">'&#25918;&#22823;&#21518;&#38386;&#32622;&#20809;'</span>)
+intenses2=0.5*c*epislon*ns.*abs(Ats).^2;
+intensei2=0.5*c*epislon*ns.*abs(Ati).^2;
+intensep2=0.5*c*epislon*ns.*abs(Atp).^2;
+subplot(222)
+hold <span class="string">on</span>
+plot(t*1e12,intenses2,t*1e12,intensep2,t*1e12,intensei2)
+legend(<span class="string">'&#25918;&#22823;&#21069;&#20449;&#21495;&#20809;'</span>,<span class="string">'&#25918;&#22823;&#21069;&#27893;&#28006;&#20809;'</span>,<span class="string">'&#25918;&#22823;&#21518;&#20449;&#21495;&#20809;'</span>,<span class="string">'&#25918;&#22823;&#21518;&#27893;&#28006;&#20809;'</span>,<span class="string">'&#25918;&#22823;&#21518;&#38386;&#32622;&#20809;'</span>)
+
+subplot(224)
+hold <span class="string">on</span>
+plot(lamdas,abs(Ats),<span class="string">'r'</span>)
+xlabel(<span class="string">'lamdas/m'</span>)
+ylabel(<span class="string">'Ats'</span>)
+title(<span class="string">'&#25918;&#22823;&#21069;&#21518;&#30340;&#20809;&#35889;'</span>)
+legend(<span class="string">'&#25918;&#22823;&#21069;&#20449;&#21495;&#20809;&#20809;&#35889;'</span>,<span class="string">'&#25918;&#22823;&#21518;&#20449;&#21495;&#20809;&#20809;&#35889;'</span>)
+<span class="comment">%</span>
+es_out=sum(0.5*c*epislon*ns.*abs(Ats).^2*dt)*pi*(dias/2).^2;
+ei_out=sum(0.5*c*epislon*ni.*abs(Ati).^2*dt)*pi*(dias/2).^2;
+ep_out=sum(0.5*c*epislon*np.*abs(Atp).^2*dt)*pi*(diap/2).^2;
+time=toc;
+fprintf(<span class="string">'&#25918;&#22823;&#21518;&#20449;&#21495;&#20809;&#33021;&#37327;:%f mJ\n'</span>,es_out*1e3);
+fprintf(<span class="string">'&#25918;&#22823;&#21518;&#38386;&#32622;&#20809;&#33021;&#37327;:%f mJ\n'</span>,ei_out*1e3);
+fprintf(<span class="string">'&#25918;&#22823;&#21518;&#27893;&#28006;&#20809;&#33021;&#37327;:%f mJ\n'</span>,ep_out*1e3);
+fprintf(<span class="string">'&#38750;&#20849;&#32447;&#35282;:%2.2f &#24230;\n'</span>,alpha);
+fprintf(<span class="string">'&#30456;&#20301;&#21305;&#37197;&#35282;:%2.2f &#24230;\n'</span>,theta);
+fprintf(<span class="string">'&#35745;&#31639;&#32791;&#26102;%f s\n'</span>,time);
+</pre><pre class="codeoutput">
+ans =
+
+    1.6490
+
+&#25918;&#22823;&#21518;&#20449;&#21495;&#20809;&#33021;&#37327;:0.069665 mJ
+&#25918;&#22823;&#21518;&#38386;&#32622;&#20809;&#33021;&#37327;:0.000221 mJ
+&#25918;&#22823;&#21518;&#27893;&#28006;&#20809;&#33021;&#37327;:74.999607 mJ
+&#38750;&#20849;&#32447;&#35282;:3.06 &#24230;
+&#30456;&#20301;&#21305;&#37197;&#35282;:23.24 &#24230;
+&#35745;&#31639;&#32791;&#26102;1.344372 s
+</pre><img vspace="5" hspace="5" src="opa_main_01.png" alt=""> <img vspace="5" hspace="5" src="opa_main_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
+
+
+
+%% 预处理
+% 1屏幕数据初始化
+
+close all
+clc
+tic
+% 2单位定义
+c=3e8;
+fs=1e-15;
+ps=1e-12;
+nJ=1e-9;
+uj=1e-6;
+mJ=1e-3;
+mm=1e-3;
+cm=1e-2;
+epislon=8.85e-12;
+
+% 3初始化
+es=69.5*uj;
+ep=300/4*mJ;
+dias=3*mm;
+diap=3*mm;
+ms=1;
+mp=1;
+lamdas0=2.4e-6;
+lamdap=1.053e-6;
+material='BBO';
+matchtype='ooe';
+type='o';
+alpha=3.0648;
+L=10*mm;
+N=2^13;
+dz=L/N;
+
+% 4初始化三波 
+tao_ftl=30*fs;
+tao_ps=400*ps;
+tao_pp=1625*ps;
+
+T=3*tao_pp;
+t=linspace(-T/2,T/2,N);
+dt=t(2)-t(1);
+chirp_s=-sqrt((tao_ps/tao_ftl)^2-1);
+tao_gs=tao_ps./sqrt(2*log(2));
+ws0=2*pi*c/lamdas0;
+ws=ws0-2*chirp_s.*t/tao_gs^2;
+chirp_p=0;
+
+lamdas=2*pi*c./ws;
+lamdai0=1./(1./lamdap-1./lamdas0);
+lamdai=1./(1./lamdap-1./lamdas);
+ns0=sellmeier(lamdas0,material,type);
+ni0=sellmeier(lamdai0,material,type);
+ns=sellmeier(lamdas,material,type);
+max(ns)
+ni=sellmeier(lamdai,material,type);
+np=sellmeier(lamdap,material,type);
+[Ats,intenses]=pulse_generator(es,dias,'gauss',tao_ps,ns0,chirp_s,t,ms);
+[Atp,intensep]=pulse_generator(ep,diap,'supergauss',tao_pp,np,chirp_p,t,mp);
+% [Ats,t2,intenses]=SuperGauss2(energy_s,diameter,ns02,tao_ps,Cs,m_s,T,N);
+% [Atp,t2,intensep]=SuperGauss2(energy_p,diameter,np02,tao_ps,Cs,m_p,T,N);
+subplot(221)
+plot(t*1e12,abs(Ats),'r.',t*1e12,Atp,'c.')
+xlabel('time/ps')
+ylabel('At')
+title('初始化信号光及泵浦光振幅分布')
+legend('信号光','泵浦光')
+subplot(222)
+plot(t*1e12,intenses,'r',t*1e12,intensep,'c')
+xlabel('time/ps')
+ylabel('It')
+title('初始化信号光及泵浦光光强分布')
+legend('信号光','泵浦光')
+
+subplot(223)
+plot(t*1e12,lamdas*1e6)
+xlabel('time/ps')
+ylabel('\lambda/um')
+title('初始化信号光光谱分布')
+subplot(224)
+plot(lamdas,abs(Ats),'b')
+ylabel('Ats')
+xlabel('\lambda/um')
+title('初始信号光振幅分布')
+% 5相位匹配角
+
+theta=pma_theta(N,alpha,lamdas0,lamdap,material,matchtype);
+theta2=theta_calculate(alpha,lamdas,lamdap,material);
+theta3=pma_theta(N,alpha,lamdas,lamdap,material,matchtype);
+
+% np=sellmeier(lamdap,material,'t',theta);
+wi=2*pi*c./lamdai;
+wp=2*pi*c./lamdap;
+figure(2)
+subplot(121)
+plot(lamdas,theta2,'g*')
+hold on
+plot(lamdas,theta3,'Linewidth',2)
+Ati=zeros(1,length(Ats));
+hold on
+plot(lamdas0,theta,'rp')
+
+% deff=d_eff(material,matchtype,theta,phi);
+% plot(lamdas,deff)
+% deff=abs(deff);
+deff=2.00e-12;
+subplot(122)
+dk2=d_k(alpha,theta,lamdas,lamdap,material,matchtype);
+dk3=deltak_calculate(alpha,theta,lamdas,lamdap,material);
+semilogy(lamdas,abs(dk2*L),'rd',lamdas,abs(dk3*L),'g.-')
+xlabel('lamdas')
+ylabel('|dk L|')
+
+
+dk=zeros(1,length(lamdas));
+for i=1:N/32
+    z=(i-.5)*L/(N/32);
+    [Ats,Ati,Atp]=rk45(Ats,Ati,Atp,ws,wi,wp,ns,ni,np,dk2,deff,z,dz);
+end
+figure(1)
+subplot(221)
+hold on
+plot(t*1e12,abs(Ats),'g-',t*1e12,abs(Atp),'b-',t*1e12,abs(Ati),'m-')
+legend('放大前信号光','放大前泵浦光','放大后信号光','放大后泵浦光','放大后闲置光')
+intenses2=0.5*c*epislon*ns.*abs(Ats).^2;
+intensei2=0.5*c*epislon*ns.*abs(Ati).^2;
+intensep2=0.5*c*epislon*ns.*abs(Atp).^2;
+subplot(222)
+hold on
+plot(t*1e12,intenses2,t*1e12,intensep2,t*1e12,intensei2)
+legend('放大前信号光','放大前泵浦光','放大后信号光','放大后泵浦光','放大后闲置光')
+
+subplot(224)
+hold on
+plot(lamdas,abs(Ats),'r')
+xlabel('lamdas/m')
+ylabel('Ats')
+title('放大前后的光谱')
+legend('放大前信号光光谱','放大后信号光光谱')
+% 
+es_out=sum(0.5*c*epislon*ns.*abs(Ats).^2*dt)*pi*(dias/2).^2;
+ei_out=sum(0.5*c*epislon*ni.*abs(Ati).^2*dt)*pi*(dias/2).^2;
+ep_out=sum(0.5*c*epislon*np.*abs(Atp).^2*dt)*pi*(diap/2).^2;
+time=toc;
+fprintf('放大后信号光能量:%f mJ\n',es_out*1e3);
+fprintf('放大后闲置光能量:%f mJ\n',ei_out*1e3);
+fprintf('放大后泵浦光能量:%f mJ\n',ep_out*1e3);
+fprintf('非共线角:%2.2f 度\n',alpha);
+fprintf('相位匹配角:%2.2f 度\n',theta);
+fprintf('计算耗时%f s\n',time);
+
+
+##### SOURCE END #####
+--></body></html>

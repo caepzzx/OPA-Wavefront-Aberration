@@ -21,14 +21,13 @@ global Vg; %存储群速度
 global Cd; %存储用于时间频率域讨论色散的参数
 %常数
 %---------------------------------------------------------------------------------------------
+%2 参数定义
 c=2.99792e+8;
 ele_c=8.8541e-12;%真空电容率
-P_wavelength=532e-9;        %泵浦光波长
 
 % %
 % %计算闲频光中心波长
 P_wavelength0=P_wavelength;
-S_wavelength0=1053e-9;      %[zzx]信号光中心波长
 P_w0=2*pi*c/P_wavelength0;    %泵浦光中心频率
 S_w0=2*pi*c/S_wavelength0;    %信号光中心频率
 I_w0=P_w0-S_w0;              %闲置光中心频率
@@ -39,11 +38,13 @@ I_wavelength0=2*pi*c/I_w0;   %闲置光中心波长
 % deltav=0.5/duration;
 % deltalambdainv=deltav/3e8;
 % wvl=lambda0^2*deltalambdainv;
-wvl =6.5e-9;    %光谱半极大全宽度:m
-R_wvl=3;    %控制考虑的波长范围
-S_wavelength=linspace(S_wavelength0-R_wvl*wvl/2,S_wavelength0+R_wvl*wvl/2,nwav);      %考虑的信号光波长
-P_w=2*pi*c/P_wavelength;    %泵浦光频率
-S_w=2*pi*c./S_wavelength;    %信号光频率
+% wvl =6.5e-9;    %光谱半极大全宽度:m
+
+tao_gs=tao_ps./sqrt(2*log(2));
+S_w=S_w0-2*chirp_s.*t/tao_gs^2;     %信号光频率
+
+S_wavelength=2*pi*c./S_w;
+P_w=2*pi*c/P_wavelength;    %泵浦光频率 
 I_w=P_w-S_w;                %闲置光频率
 I_wavelength=2*pi*c./I_w;    %闲置光波长 
 S_R_index=sqrt(2.586179+0.013099./((S_wavelength*1e+6).^2-0.011893)-0.017968*(S_wavelength*1e+6).^2-(2.26e-4)*(S_wavelength*1e+6).^4);%信号光折射率(电场强度偏振沿y向）
@@ -54,29 +55,11 @@ P_Z_index=sqrt(2.586179+0.017968/((P_wavelength*1e+6)^2-0.011893)-0.017968*(P_wa
 S_angle=-0.5*pi/180;         %泵浦光与信号光波矢夹角
 P_angle=0.42*pi/180;          %[zzx]信号光与闲置光波矢夹角
 I_angle = -asin(S_R_index.*I_wavelength./I_R_index./S_wavelength*sin(S_angle));         %泵浦光与闲置光波矢夹角
-P_R_index=(S_R_index(num/2)./S_wavelength(num/2)*cos(S_angle)+I_R_index(num/2)./I_wavelength(num/2).*cos(I_angle(num/2)))*P_wavelength;
-angle=acos(sqrt((1/P_X_index^2-1/P_R_index^2)/(1/P_X_index^2-1/P_Y_index^2)));
-d_eff=0.98e-12*cos(angle); %参量过程－有效非线性系数
-
-
-% 
-% K_con_S0=S_w0*d_eff/(c*S_R_index0.*cos(S_angle0));
-% K_con_I0=I_w0*d_eff/(c*I_R_index0.*cos(I_angle0));
-% K_con_P0=P_w0*d_eff/(c*P_R_index0);
-% K_con0=[K_con_S0;K_con_I0;K_con_P0];
-
-%-------------------------------------------------%
-
-%参量过程中三波的耦合项中的参数[zzx]
-K_con_S=S_w*d_eff./(c*S_R_index.*cos(S_angle));
-K_con_I=I_w*d_eff./(c*I_R_index.*cos(I_angle));
-K_con_P=P_w*d_eff./(c*P_R_index);
-K_con={K_con_S;K_con_I;K_con_P};
 %-------------------------------------------------------------------------------------------------   
 a_S=0.1; %信号光吸收系数
 a_P=0.1; %泵浦光吸收系数
 a_I=0.1; %闲置光吸收系数
-dk=2*pi*(P_R_index/P_wavelength-S_R_index./S_wavelength*cos(S_angle)-I_R_index./I_wavelength.*cos(I_angle));
+
 Rt=1+1e-6;  %用于设置求波矢导数时波长变化的步长
             %DeltaWavelength=Rt*Wavelength0-Wavelength0
 %------三波在中心频率处的折射率--------%
@@ -108,3 +91,22 @@ Cd=[1/Vgs-1/(cos(S_angle0)*Vgs);
     1/Vgs-1/(cos(I_angle0)*Vgi);    
     1/Vgs-1/Vgp];
 % plot(t,dk);hold on
+P_R_index=(S_R_index0./S_wavelength0*cos(S_angle)+I_R_index0./I_wavelength0.*cos(I_angle(nwav/2)))*P_wavelength;
+angle=acos(sqrt((1/P_X_index^2-1/P_R_index^2)/(1/P_X_index^2-1/P_Y_index^2)));
+d_eff=0.98e-12*cos(angle); %参量过程－有效非线性系数
+
+
+% 
+% K_con_S0=S_w0*d_eff/(c*S_R_index0.*cos(S_angle0));
+% K_con_I0=I_w0*d_eff/(c*I_R_index0.*cos(I_angle0));
+% K_con_P0=P_w0*d_eff/(c*P_R_index0);
+% K_con0=[K_con_S0;K_con_I0;K_con_P0];
+
+%-------------------------------------------------%
+
+%参量过程中三波的耦合项中的参数[zzx]
+K_con_S=S_w*d_eff./(c*S_R_index.*cos(S_angle));
+K_con_I=I_w*d_eff./(c*I_R_index.*cos(I_angle));
+K_con_P=P_w*d_eff./(c*P_R_index);
+K_con={K_con_S;K_con_I;K_con_P};
+dk=2*pi*(P_R_index/P_wavelength-S_R_index./S_wavelength*cos(S_angle)-I_R_index./I_wavelength.*cos(I_angle));

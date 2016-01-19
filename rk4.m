@@ -1,4 +1,4 @@
-function yout=rk4(y,z,ny,h,P_w,S_w,I_w,K_con,dk)
+function yout=rk4(y,z,h,P_w,S_w,I_w,K_con,dk)
 %y－初值
 %n－方程个数
 %z—传播距离
@@ -13,15 +13,16 @@ function yout=rk4(y,z,ny,h,P_w,S_w,I_w,K_con,dk)
 %K2=f(Xk+h/2,Yk+h/2*K1)
 %K3=f(Xk+h/2,Yk+h/2*K2)
 %K4=f(Xk+h,Yk+h*K3)
+%RK45 此程序主要计算入射光,经过一个切片由于不同性质的光之间的耦合,而产生的新的光场分布
 %----------------
 
 n=size(y);
 dydz=zeros(n);
 yt=zeros(n);
-dyt=zeros(n);
-dym=zeros(n);
-dy4=dym;
-yout=zeros(n);
+dyt=yt;
+dym=yt;
+dy4=yt;
+yout=yt;
 hh=h*0.5;
 h6=h/6.0;
 zh=z+hh;
