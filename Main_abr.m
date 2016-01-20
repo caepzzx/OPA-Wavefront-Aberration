@@ -24,7 +24,7 @@ S_wavelength0=1053e-9;       %[zzx]信号光中心波长
 nstep=round(2e3*crstl_L);    %z－积分步长个数
 h=crstl_L/nstep;
 
-nt=1024;Tmax=32;             %FFT 点和窗口尺寸
+nt=1024*4.5;          %FFT 点和窗口尺寸
 
 % 4初始化三波 
 tao_ftl=30*1e-15;            %种子光时域 FWHM     
@@ -32,10 +32,10 @@ tao_ps=400*1e-12;            %展宽后时域 FWHM
 tao_pp=1625*1e-12;           %泵浦光时域 FWHM
 chirp_s=-sqrt((tao_ps/tao_ftl)^2-1);
 chirp_p=0;
-T=3*tao_pp;
+T=5*tao_pp;
 dt=T/nt;
 t=(-nt/2:nt/2-1)*dt;
-omega=2*pi*(1/dt)/nt*[(0:nt/2-1) (-nt/2:-1)];%frequency grid
+omega=2*pi*(1/T)*[(0:nt/2-1) (-nt/2:-1)];%frequency grid
 num=numel(t);                 %时间取样个数
 nwav=50;                    %波长取样个数
 nx=64;                      %x－取样个数
@@ -102,34 +102,59 @@ P=zeros(num,1);
 buf=load('data\ph_abr2.mat');
 Exy_ph=buf.Exy_ph;
 %-------------------------------------------------------------------------
-% W_F=exp(-(X.^2+Y.^2).^20/(1.3*d0/2/log(2)^(0.025))^40);
+W_F=exp(-(X.^2+Y.^2).^20/(1.3*d0/2/log(2)^(0.025))^40);
 %电场强度赋初值
 %--------------------------------------------------------------------------
 E_S_out=E_S0*pulsegenerator(x,y,t,tao_ps,Dias,mxys,mts,chirp_s);
 E_P_out=E_P0*pulsegenerator(x,y,t,tao_pp,Diap,mxyp,mtp,chirp_p);%.*exp(i*0.6*Exy_ph);
 %--------------------------------------------------------------------------
 
-% for k=1:num 
-%    E_P_out(k,:,:)=exp(j*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
-% end
+for k=1:num 
+   E_P_out(k,:,:)=exp(j*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
+end
 
 %画出信号光、闲置光初始时间波形
 figure;
 mesh(x,y,squeeze(E_S_out(round(size(E_S_out,1)/2),:,:)).*conj(squeeze(E_S_out(round(size(E_S_out,1)/2),:,:))));
+
+
+Is=(1/2*c*S_R_index0*ele_c)*(E_S_out.*conj(E_S_out));
+Ii=(1/2*c*S_R_index0*ele_c)*(E_I_out.*conj(E_I_out));
+Ip=(1/2*c*P_R_index0*ele_c)*(E_P_out.*conj(E_P_out));
+
+
+h_spect=figure;
+subplot(311);
+plot(S_wavelength*1e9,Is(:,nx/2,ny/2)/max(Is(:,nx/2,ny/2)),'r');
+axis([0.8*S_wavelength0*1e9 1.2*S_wavelength0*1e9 0 inf]);
+xlabel('wavelength /nm');
+ylabel('Normalized Power');
+subplot(312);
+plot(I_wavelength*1e9,Ii(:,nx/2,ny/2)/max(Ii(:,nx/2,ny/2)),'g');
+axis([0.8*I_wavelength0*1e9 1.2*I_wavelength0*1e9 0 inf]);
+xlabel('wavelength /nm');
+ylabel('Normalized Power');
+subplot(313);
+plot(P_wavelength*1e9,Ip(:,nx/2,ny/2)/max(Ip(:,nx/2,ny/2)),'b');
+axis([0.8*P_wavelength0*1e9 1.2*P_wavelength0*1e9 0 inf]);
+xlabel('wavelength /nm');
+ylabel('Normalized Power');
+hold on;
+
+
 h1=figure; 
 subplot(2,2,1)
-I=0.5*ele_c*c*P_R_index*E_P_out(:,nx/2,ny/2).*conj(E_P_out(:,nx/2,ny/2));
-plot(t*1e9,I/max(I),'k-.','LineWidth',1);
+
+plot(t*1e9,Ip(:,nx/2,ny/2)/max(Ip(:,nx/2,ny/2)),'k-.','LineWidth',1);
 xlabel('time (ns)','FontSize',16);ylabel('Normalized intensity','FontSize',16);
 hold on;
-I=0.5*ele_c*c*S_R_index0*E_S_out(:,nx/2,ny/2).*conj(E_S_out(:,nx/2,ny/2));
-plot(t*1e9,I/max(I),'r-.','LineWidth',1);
+
+plot(t*1e9,Is(:,nx/2,ny/2)/max(Is(:,nx/2,ny/2)),'r-.','LineWidth',1);
 legend('Initial_E_P','Initial_E_S');
 
 %泵浦光、信号光初始能量
 
-Is=(1/2*c*S_R_index0*ele_c)*(E_S_out.*conj(E_S_out));
-Ip=(1/2*c*P_R_index0*ele_c)*(E_P_out.*conj(E_P_out));
+
 S_En=trapz(y,squeeze(trapz(x,squeeze(trapz(t,Is,1)),1)))*1000;
 P_En=trapz(y,squeeze(trapz(x,squeeze(trapz(t,Ip,1)),1)))*1000;
 %----------------------------------------------------
@@ -142,13 +167,13 @@ dispersion=exp(Cd*(-i*omega)*h);
 M=numel(x);N=numel(y);
 matlabpool local 4  %设置matlabpool 线程数
 
-    parfor j=1:num
+   parfor j=1:num
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
         v=rk4(v,0,h/2,P_w,S_w(j),I_w(j),K_con_wav(K_con,j),dk(j));
         E_S_out(j,:,:)=v(1,:,:);
         E_I_out(j,:,:)=v(2,:,:);
         E_P_out(j,:,:)=v(3,:,:);  
-   end
+  end
 
 
 zz(1)=z1;
@@ -183,22 +208,23 @@ for k=1:1:nstep
         
        %--------考虑色散影响----------% 
       
-       for ind=1:M*N
-           i = mod(ind-1, M) + 1;
-           j = floor((ind-1)/M) + 1; 
-%            fprintf('(%d,%d)',i,j);
-           E_w_dot=[squeeze(E_S_w(:,i,j))';
-                    squeeze(E_I_w(:,i,j))';
-                    squeeze(E_P_w(:,i,j))'];
-                
-           E_w_dot=E_w_dot.* dispersion;
-           E_S_w(:,i,j)=E_w_dot(1,:);
-           E_I_w(:,i,j)=E_w_dot(2,:);
-           E_P_w(:,i,j)=E_w_dot(3,:);
+       parfor j=1:num;
+        E_S_wxy=squeeze(E_S_w(j,:,:));
+        E_I_wxy=squeeze(E_I_w(j,:,:));
+        E_P_wxy=squeeze(E_P_w(j,:,:));
+        
+        E_S_wxy=E_S_wxy.*dispersion(1,j);
+        E_I_wxy=E_I_wxy.*dispersion(2,j);
+        E_P_wxy=E_P_wxy.*dispersion(3,j);
+        
+        E_S_w(j,:,:)=E_S_wxy;
+        E_I_w(j,:,:)=E_I_wxy;
+        E_P_w(j,:,:)=E_P_wxy;  
+           
        end
       %--------考虑走离和衍射影响----------%    
         [FX,FY]=meshgrid(fx,fy); 
-     parfor j=1:1:num 
+     parfor j=1:num 
         E_S_xy=squeeze(E_S_w(j,:,:));
         E_I_xy=squeeze(E_S_w(j,:,:));
         E_P_xy=squeeze(E_S_w(j,:,:));
@@ -216,7 +242,7 @@ for k=1:1:nstep
         E_P_w=fft(E_P_w,[],1);
 
 %----------------进行空间频率域反变换---------------%     
- parfor j=1:1:num
+ parfor j=1:num
         E_S_xy=squeeze(E_S_w(j,:,:));
         E_I_xy=squeeze(E_I_w(j,:,:));
         E_P_xy=squeeze(E_P_w(j,:,:));
@@ -258,7 +284,7 @@ end
 
  parfor j=1:num
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
-        v=rk4(v,z,-h/2,P_w,S_w(j),I_w(j),K_con_wav(K_con,j),dk(j));
+        v=rk4(v,z+h/2  nb,-h/2,P_w,S_w(j),I_w(j),K_con_wav(K_con,j),dk(j));
         E_S_out(j,:,:)=v(1,:,:);
         E_I_out(j,:,:)=v(2,:,:);
         E_P_out(j,:,:)=v(3,:,:);  
@@ -314,6 +340,30 @@ mesh(X*1e3,Y*1e3,E.*W_F)
 subplot(2,2,4)
 E(:,:)=E_P_ph(nstep,:,:);
 mesh(X*1e3,Y*1e3,E.*W_F)
+
+Is=(1/2*c*S_R_index0*ele_c)*(E_S_out.*conj(E_S_out));
+Ii=(1/2*c*S_R_index0*ele_c)*(E_I_out.*conj(E_I_out));
+Ip=(1/2*c*P_R_index0*ele_c)*(E_P_out.*conj(E_P_out));
+
+
+figure(h_spect);
+subplot(311);
+plot(S_wavelength*1e9,Is(:,nx/2,ny/2)/max(Is(:,nx/2,ny/2)),'r');
+axis([0.8*S_wavelength0*1e9 1.2*S_wavelength0*1e9 0 inf]);
+xlabel('wavelength /nm');
+ylabel('Normalized Power');
+subplot(312);
+plot(I_wavelength*1e9,Ii(:,nx/2,ny/2)/max(Ii(:,nx/2,ny/2)),'g');
+axis([0.8*I_wavelength0*1e9 1.2*I_wavelength0*1e9 0 inf]);
+xlabel('wavelength /nm');
+ylabel('Normalized Power');
+subplot(313);
+plot(P_wavelength*1e9,Ip(:,nx/2,ny/2)/max(Ip(:,nx/2,ny/2)),'b');
+axis([0.8*P_wavelength0*1e9 1.2*P_wavelength0*1e9 0 inf]);
+xlabel('wavelength /nm');
+ylabel('Normalized Power');
+hold on;
+
 % 保存信号场
 save('data\E_S_out.mat','E_S_out');
 
