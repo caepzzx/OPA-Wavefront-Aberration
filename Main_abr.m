@@ -24,7 +24,7 @@ S_wavelength0=1053e-9;       %[zzx]信号光中心波长
 nstep=round(2e3*crstl_L);    %z－积分步长个数
 h=crstl_L/nstep;
 
-nt=1024*4.5;          %FFT 点和窗口尺寸
+nt=1024*4;          %FFT 点和窗口尺寸
 
 % 4初始化三波 
 tao_ftl=30*1e-15;            %种子光时域 FWHM     
@@ -32,12 +32,12 @@ tao_ps=400*1e-12;            %展宽后时域 FWHM
 tao_pp=1625*1e-12;           %泵浦光时域 FWHM
 chirp_s=-sqrt((tao_ps/tao_ftl)^2-1);
 chirp_p=0;
-T=5*tao_pp;
+T=tao_ps/(48/nt);
 dt=T/nt;
 t=(-nt/2:nt/2-1)*dt;
 omega=2*pi*(1/T)*[(0:nt/2-1) (-nt/2:-1)];%frequency grid
 num=numel(t);                 %时间取样个数
-nwav=50;                    %波长取样个数
+% nwav=50;                    %波长取样个数
 nx=64;                      %x－取样个数
 ny=nx;                      %y－取样个数
 nvar=3;                      %参量方程个数
@@ -165,7 +165,8 @@ P_En=trapz(y,squeeze(trapz(x,squeeze(trapz(t,Ip,1)),1)))*1000;
 
 dispersion=exp(Cd*(-i*omega)*h);
 M=numel(x);N=numel(y);
-matlabpool local 4  %设置matlabpool 线程数
+matlabpool local 2  %设置matlabpool 线程数
+
 
    parfor j=1:num
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
@@ -186,14 +187,15 @@ for k=1:1:nstep
 %     end
 
 %----------------进行空间频率域变换---------------%
-    for j=1:1:num
+
+    for j=1:num
         E_S_xy=squeeze(E_S_out(j,:,:));
         E_I_xy=squeeze(E_I_out(j,:,:));
         E_P_xy=squeeze(E_P_out(j,:,:));
         
         [E_S_xy,fx,fy]=xy_fft(E_S_xy,x,y);
-        [E_I_xy,fx,fy]=xy_fft(E_I_xy,x,y);
-        [E_P_xy,fx,fy]=xy_fft(E_P_xy,x,y);
+        [E_I_xy,~,~]=xy_fft(E_I_xy,x,y);
+        [E_P_xy,~,~]=xy_fft(E_P_xy,x,y);
         
         E_S_w(j,:,:)=E_S_xy(:,:);
         E_I_w(j,:,:)=E_I_xy(:,:);

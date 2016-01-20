@@ -91,7 +91,7 @@ Cd=[1/Vgs-1/(cos(S_angle0)*Vgs);
     1/Vgs-1/(cos(I_angle0)*Vgi);    
     1/Vgs-1/Vgp];
 % plot(t,dk);hold on
-P_R_index=(S_R_index0./S_wavelength0*cos(S_angle)+I_R_index0./I_wavelength0.*cos(I_angle(nwav/2)))*P_wavelength;
+P_R_index=(S_R_index0./S_wavelength0*cos(S_angle)+I_R_index0./I_wavelength0.*cos(I_angle0))*P_wavelength;
 angle=acos(sqrt((1/P_X_index^2-1/P_R_index^2)/(1/P_X_index^2-1/P_Y_index^2)));
 d_eff=0.98e-12*cos(angle); %参量过程－有效非线性系数
 
