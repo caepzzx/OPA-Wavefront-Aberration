@@ -1,0 +1,23 @@
+function yout=rk4(y,z,ny,h,P_w,S_w,I_w,K_con,dk)
+%y－初值
+%n－方程个数
+%z—传播距离
+%h—积分步长
+n=size(y);
+dydz=zeros(n);
+yt=zeros(n);
+dyt=zeros(n);
+dym=zeros(n);
+yout=zeros(n);
+hh=h*0.5;
+h6=h/6.0;
+zh=z+hh;
+dydz=derivs(z,y,P_w,S_w,I_w,K_con,dk);%对应k1
+yt=y+hh.*dydz;
+dyt=derivs(zh,yt,P_w,S_w,I_w,K_con,dk);%对应k2
+yt=y+hh.*dyt;
+dym=derivs(zh,yt,P_w,S_w,I_w,K_con,dk);%对应k3
+yt=y+h.*dym;
+dym=dyt+dym;
+dyt=derivs(z+h,yt,P_w,S_w,I_w,K_con,dk);%对应k4
+yout=y+h6.*(dydz+dyt+2.0.*dym);%输出积分值
