@@ -28,16 +28,17 @@ nt=1024*4;          %FFT 点和窗口尺寸
 
 % 4初始化三波 
 tao_ftl=30*1e-15;            %种子光时域 FWHM     
-tao_ps=400*1e-12;            %展宽后时域 FWHM   
-tao_pp=1625*1e-12;           %泵浦光时域 FWHM
-chirp_s=-sqrt((tao_ps/tao_ftl)^2-1);
+tao_ps=40*1e-12;            %展宽后时域 FWHM   
+tao_pp=200*1e-12;           %泵浦光时域 FWHM
+chirp_s=-sqrt((tao_ps/tao_ftl)^2-1); %线性啁啾高斯脉冲 半高全宽 Tmin=Tfwhm/sqrt(1+C^2)
 chirp_p=0;
-T=tao_ps/(48/nt);
-dt=T/nt;
+dt=tao_ftl/2^4;
+nt=2.^nextpow2(2*tao_pp/dt);
+T=dt*nt;
 t=(-nt/2:nt/2-1)*dt;
 omega=2*pi*(1/T)*[(0:nt/2-1) (-nt/2:-1)];%frequency grid
 num=numel(t);                 %时间取样个数
-% nwav=50;                    %波长取样个数
+nwav=50;                    %波长取样个数
 nx=64;                      %x－取样个数
 ny=nx;                      %y－取样个数
 nvar=3;                      %参量方程个数

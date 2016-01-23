@@ -34,6 +34,9 @@ zz=zeros(nstep+1,1);
 E_P_out=zeros(num,nx,ny);   %泵浦光电场强度
 E_S_out=zeros(num,nx,ny);   %信号光电场强度
 E_I_out=zeros(num,nx,ny);   %闲置光电场强度
+E_P_w=zeros(num,nx,ny);     %泵浦光电场频域表示
+E_S_w=zeros(num,nx,ny);     %信号光电场频域表示
+E_I_w=zeros(num,nx,ny);     %闲置光电场频域表示
 E_S_ph=zeros(nstep+1,nx,ny);    %信号光波前在参量作用过程中的变化
 E_I_ph=zeros(nstep+1,nx,ny);    %闲置光波前在参量作用过程中的变化
 E_P_ph=zeros(nstep+1,nx,ny);    %泵浦光波前在参量作用过程中的变化
@@ -95,10 +98,10 @@ P_En=trapz(y,squeeze(trapz(x,squeeze(trapz(t,Ip,1)),1)))*1000;
 h=(z2-z1)/nstep;
 z=z1+h/2;
 zz(1)=h/2;
-
- for j=1:num
-     
-        %------------------------------------------------------------------
+[fx,fy]=spati_vector(nx,ny,x,y);
+[FX,FY]=meshgrid(fx,fy); 
+ parfor j=1:num
+     %------------------------------------------------------------------
         %第二步计算参量作用过程
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
         v=rk4(v,0,ny,h/2,P_w,S_w(j),I_w(j),K_con(j),dk(j));
@@ -115,7 +118,7 @@ for k=2:nstep+1
 %        S_angle=0.5*pi/180;
 %        I_angle(:)= -asin(S_R_index.*I_wavelength./I_R_index./S_wavelength*sin(S_angle));
 %     end
-    for j=1:num
+    parfor j=1:num
         %第一步计算走离效应的影响
         %------------------------------------------------------------------
         %进行傅立叶变换
@@ -123,29 +126,56 @@ for k=2:nstep+1
         E_I_xy=squeeze(E_I_out(j,:,:));
         E_P_xy=squeeze(E_P_out(j,:,:));
         
-        [E_S_xy,fx,fy]=xy_fft(E_S_xy,x,y);
-        [E_I_xy,fx,fy]=xy_fft(E_I_xy,x,y);
-        [E_P_xy,fx,fy]=xy_fft(E_P_xy,x,y);
-        [FX,FY]=meshgrid(fx,fy); 
+        [E_S_w(j,:,:),~,~]=xy_fft(E_S_xy,x,y);
+        [E_I_w(j,:,:),~,~]=xy_fft(E_I_xy,x,y);
+        [E_P_w(j,:,:),~,~]=xy_fft(E_P_xy,x,y);
+    end
+       
+        E_S_w=ifft(E_S_w,[],1);
+        E_I_w=ifft(E_I_w,[],1);
+        E_P_w=ifft(E_P_w,[],1);
         
+    parfor j=1:num
+        E_S_xy=squeeze(E_S_w(j,:,:));
+        E_I_xy=squeeze(E_I_w(j,:,:));
+        E_P_xy=squeeze(E_P_w(j,:,:)); 
         E_S_xy = E_S_xy.*exp(((S_angle*i*2*pi)*FY-1/2*a_S)*h).*exp(-i*pi*S_wavelength(num/2)/S_R_index(num/2)*(FX.^2+FY.^2)*h);      
         E_I_xy = E_I_xy.*exp(((I_angle(num/2)*i*2*pi)*FY-1/2*a_I)*h).*exp(-i*pi*I_wavelength(num/2)/I_R_index(num/2)*(FX.^2+FY.^2)*h);     
         E_P_xy = E_P_xy.*exp(((P_angle*i*2*pi)*FY-1/2*a_P)*h).*exp(-i*pi*P_wavelength/P_R_index*(FX.^2+FY.^2)*h);
-        %进行傅立叶逆变换
+        E_S_w(j,:,:)=E_S_xy(:,:);
+        E_I_w(j,:,:)=E_I_xy(:,:);
+        E_P_w(j,:,:)=E_P_xy(:,:);
+    end
+    
+    
+     %----------------进行时间频率域反变换---------------%        
+        E_S_w=fft(E_S_w,[],1);
+        E_I_w=fft(E_I_w,[],1);
+        E_P_w=fft(E_P_w,[],1);
+      %------------进行空间傅立叶逆变换-----------------%  
+     parfor j=1:num
+        E_S_xy=squeeze(E_S_w(j,:,:));
+        E_I_xy=squeeze(E_I_w(j,:,:));
+        E_P_xy=squeeze(E_P_w(j,:,:));
+        
         E_S_xy=xy_ifft(E_S_xy,x,y);
         E_I_xy=xy_ifft(E_I_xy,x,y);
         E_P_xy=xy_ifft(E_P_xy,x,y);
+        
         E_S_out(j,:,:)=E_S_xy(:,:);
         E_I_out(j,:,:)=E_I_xy(:,:);
-        E_P_out(j,:,:)=E_P_xy(:,:);
+        E_P_out(j,:,:)=E_P_xy(:,:);  
+     end
+  
         %------------------------------------------------------------------
         %第二步计算参量作用过程
+        parfor j=1:num
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
         v=rk4(v,z,ny,h,P_w,S_w(j),I_w(j),K_con(j),dk(j));
         E_S_out(j,:,:)=v(1,:,:);
         E_I_out(j,:,:)=v(2,:,:);
-        E_P_out(j,:,:)=v(3,:,:);      
-    end
+        E_P_out(j,:,:)=v(3,:,:);  
+        end
 %     [bmx,bmy]=Beam_Quality(x,y,fx,fy,S_wavelength(num/2),E_P_out);
 %     Bmxz(k,:)=bmx;
 %     Bmyz(k,:)=bmy;
@@ -157,7 +187,7 @@ for k=2:nstep+1
 end
 
 
-    for j=1:num
+    parfor j=1:num
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
         v=rk4(v,z,ny,-h/2,P_w,S_w(j),I_w(j),K_con(j),dk(j));
         E_S_out(j,:,:)=v(1,:,:);
@@ -194,11 +224,11 @@ pcolor(x,y,Z);
 colormap jet,shading interp;
 colorbar;
 title('时间积分光斑形状');
-pha=atan2(imag(E_S_out(:,nx/2,ny/2)),real(E_S_out(:,nx/2,ny/2)))/2/pi;
+pha=phase(E_S_out(:,nx/2,ny/2))/pi;
 subplot(2,2,4)
 plot(t*1e9,pha,'r');
 xlabel('time (ns)');
-ylabel('Phase (2\pi)');
+ylabel('Phase (pi)');
 title('Phase accumulated in OPA');
 hold on
 %画出参量作用后波前变化

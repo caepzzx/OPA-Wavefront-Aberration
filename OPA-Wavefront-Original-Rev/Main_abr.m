@@ -140,6 +140,7 @@ for k=1:nstep
     E_S_ph(k,:,:)=atan2(imag(E_S_out(num/2,:,:)),real(E_S_out(num/2,:,:)));
     E_I_ph(k,:,:)=atan2(imag(E_I_out(num/2,:,:)),real(E_I_out(num/2,:,:)));
     E_P_ph(k,:,:)=atan2(imag(E_P_out(num/2,:,:)),real(E_P_out(num/2,:,:)));
+   
     %记录信号光能量随参量作用过程的变化
     Is=(1/2*c*S_R_index(num/2)*ele_c).*E_S_out.*conj(E_S_out);
     Ip=(1/2*c*P_R_index*ele_c).*E_P_out.*conj(E_P_out);
@@ -175,9 +176,11 @@ pcolor(x,y,Z);
 colormap jet,shading interp;
 colorbar;
 title('时间积分光斑形状');
-pha=atan2(imag(E_S_out(:,nx/2,ny/2)),real(E_S_out(:,nx/2,ny/2)))/2/pi;
+pha=phase(E_S_out(:,nx/2,ny/2))/pi;
 subplot(2,2,4)
 plot(t*1e9,pha,'r');
+xlabel('time (ns)');
+ylabel('Phase (pi)');
 title('Phase accumulated in OPA');
 hold on
 %画出参量作用后波前变化
