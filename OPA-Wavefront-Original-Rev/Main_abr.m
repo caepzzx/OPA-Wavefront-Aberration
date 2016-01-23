@@ -10,7 +10,7 @@ ny=128;                      %y－取样个数
 nvar=3;                      %参量方程个数
 t0=3e-9;                     %脉冲宽度：ns
 wvl =8e-9;                   %光谱半极大全宽度:nm
-d0=2.0e-3;                   %光斑直径:m
+d0=200e-3;                   %光斑直径:m
 crstl_L=59.5e-3;             %晶体长度:m
 z1=0;                        %积分起点
 z2=crstl_L;                  %积分终点:m
@@ -57,7 +57,7 @@ P=zeros(num,1);
 % EXY=normrnd(1,0.0625,nx,ny);% EXY=cos(15*(X+Y)/d0)*pi*2;% EXY=normrnd(1,0.0625,nx,ny);%引入随机噪声
 %畸变波前产生函数
 %-------------------------------------------------------------------------
-% Exy_ph=wvf_Gn(x,y,d0,dx);
+% Exy_ph=wvf_Gn(x,y,8e-2,0.3);
 % save('data\ph_abr2.mat','Exy_ph');
 buf=load('data\ph_abr2.mat');
 Exy_ph=buf.Exy_ph;
@@ -176,7 +176,7 @@ pcolor(x,y,Z);
 colormap jet,shading interp;
 colorbar;
 title('时间积分光斑形状');
-pha=phase(E_S_out(:,nx/2,ny/2))/pi;
+pha=atan2(imag(E_S_out(:,nx/2,ny/2)),real(E_S_out(:,nx/2,ny/2)))/2/pi;
 subplot(2,2,4)
 plot(t*1e9,pha,'r');
 xlabel('time (ns)');

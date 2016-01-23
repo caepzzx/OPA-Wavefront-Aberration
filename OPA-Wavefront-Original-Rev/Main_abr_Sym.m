@@ -10,7 +10,7 @@ ny=128;                      %y－取样个数
 nvar=3;                      %参量方程个数
 t0=3e-9;                     %脉冲宽度：ns
 wvl =8e-9;                   %光谱半极大全宽度:nm
-d0=2.0e-3;                   %光斑直径:m
+d0=200e-3;                   %光斑直径:m
 crstl_L=59.5e-3;             %晶体长度:m
 z1=0;                        %积分起点
 z2=crstl_L;                  %积分终点:m
@@ -60,7 +60,7 @@ P=zeros(num,1);
 % EXY=normrnd(1,0.0625,nx,ny);% EXY=cos(15*(X+Y)/d0)*pi*2;% EXY=normrnd(1,0.0625,nx,ny);%引入随机噪声
 %畸变波前产生函数
 %-------------------------------------------------------------------------
-% Exy_ph=wvf_Gn(x,y,d0,dx);
+% Exy_ph=wvf_Gn(x,y,10e-2,0.9);
 % save('data\ph_abr2.mat','Exy_ph');
 buf=load('data\ph_abr2.mat');
 Exy_ph=buf.Exy_ph;
@@ -100,7 +100,7 @@ z=z1+h/2;
 zz(1)=h/2;
 [fx,fy]=spati_vector(nx,ny,x,y);
 [FX,FY]=meshgrid(fx,fy); 
- parfor j=1:num
+ for j=1:num
      %------------------------------------------------------------------
         %第二步计算参量作用过程
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
@@ -118,7 +118,7 @@ for k=2:nstep+1
 %        S_angle=0.5*pi/180;
 %        I_angle(:)= -asin(S_R_index.*I_wavelength./I_R_index./S_wavelength*sin(S_angle));
 %     end
-    parfor j=1:num
+    for j=1:num
         %第一步计算走离效应的影响
         %------------------------------------------------------------------
         %进行傅立叶变换
@@ -135,7 +135,7 @@ for k=2:nstep+1
         E_I_w=ifft(E_I_w,[],1);
         E_P_w=ifft(E_P_w,[],1);
         
-    parfor j=1:num
+    for j=1:num
         E_S_xy=squeeze(E_S_w(j,:,:));
         E_I_xy=squeeze(E_I_w(j,:,:));
         E_P_xy=squeeze(E_P_w(j,:,:)); 
@@ -153,7 +153,7 @@ for k=2:nstep+1
         E_I_w=fft(E_I_w,[],1);
         E_P_w=fft(E_P_w,[],1);
       %------------进行空间傅立叶逆变换-----------------%  
-     parfor j=1:num
+     for j=1:num
         E_S_xy=squeeze(E_S_w(j,:,:));
         E_I_xy=squeeze(E_I_w(j,:,:));
         E_P_xy=squeeze(E_P_w(j,:,:));
@@ -169,7 +169,7 @@ for k=2:nstep+1
   
         %------------------------------------------------------------------
         %第二步计算参量作用过程
-        parfor j=1:num
+        for j=1:num
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
         v=rk4(v,z,ny,h,P_w,S_w(j),I_w(j),K_con(j),dk(j));
         E_S_out(j,:,:)=v(1,:,:);
@@ -187,7 +187,7 @@ for k=2:nstep+1
 end
 
 
-    parfor j=1:num
+    for j=1:num
         v=[E_S_out(j,:,:);E_I_out(j,:,:);E_P_out(j,:,:)]; 
         v=rk4(v,z,ny,-h/2,P_w,S_w(j),I_w(j),K_con(j),dk(j));
         E_S_out(j,:,:)=v(1,:,:);
