@@ -68,8 +68,8 @@ Exy_ph=buf.Exy_ph;
 W_F=exp(-(X.^2+Y.^2).^20/(1.3*d0/2/log(2)^(0.025))^40);
 %电场强度赋初值
 %--------------------------------------------------------------------------
-E_S_out=E_S0*pulsegenerator(x,y,t,t0,d0,1,1)/sqrt(S_R_index(num/2));
-E_P_out=E_P0*pulsegenerator(x,y,t,t0,d0,5,5)/sqrt(P_R_index);%.*exp(i*0.6*Exy_ph);
+E_S_out=E_S0*pulsegenerator(x,y,t,t0,d0,1,1,0.5)/sqrt(S_R_index(num/2));
+E_P_out=E_P0*pulsegenerator(x,y,t,t0,d0,5,5,0)/sqrt(P_R_index);%.*exp(i*0.6*Exy_ph);
 %--------------------------------------------------------------------------
 for k=1:nstep
     E_P_out(k,:,:)=exp(i*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
