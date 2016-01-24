@@ -3,7 +3,7 @@ tic
 clear all;
 %步长初始值设置
 %----------------------------------------------  
-num=50;                      %时间取样个数
+% num=50;                      %时间取样个数
 nstep=50;                    %z－积分步长个数
 nx=128;                      %x－取样个数
 ny=128;                      %y－取样个数
@@ -15,6 +15,25 @@ crstl_L=59.5e-3;             %晶体长度:m
 z1=0;                        %积分起点
 z2=crstl_L;                  %积分终点:m
 s=2;                         %窗口宽度因子
+Ds=200e-3;                   %信号光维度
+Dp=200e-3;                   %信号光维度
+mts=1;                       %信号光时间分布阶数
+mtp=5;                       %泵浦光时间分布阶数
+mxys=1;                      %信号光空间分布阶数
+mxyp=5;                      %泵浦光空间分布阶数
+tao_ftl=30*1e-12;             %种子光时域 FWHM     
+tao_ps=40*1e-12;             %展宽后时域 FWHM   
+tao_pp=45*1e-12;            %泵浦光时域 FWHM
+chirp_s=-sqrt((tao_ps/tao_ftl)^2-1); %线性啁啾高斯脉冲 半高全宽 Tmin=Tfwhm/sqrt(1+C^2)
+chirp_p=0;
+dt=tao_ftl/2^4;
+nt=2.^nextpow2(2*tao_pp/dt);
+T=dt*nt;
+t=(-nt/2:nt/2-1)*dt;
+num=numel(t);                 %时间取样个数
+omega=2*pi*(1/T)*[(0:nt/2-1) (-nt/2:-1)];%frequency grid
+
+
 %初始电场强度
 E_P0=8.9e+7;   
 E_S0=5.0e+3;
@@ -25,7 +44,7 @@ dx=s*d0/nx;                 %x－取样分辨率
 dy=s*d0/ny;                 %y－取样分辨率
 x=linspace(-s*d0,s*d0,nx);  %x－坐标
 y=linspace(-s*d0,s*d0,ny);  %y－坐标 
-t=linspace(-s*t0,s*t0,num); %t－坐标
+% t=linspace(-s*t0,s*t0,num); %t－坐标
 %全局变量
 %-----------------
 const_LBO;         
@@ -65,11 +84,11 @@ Exy_ph=buf.Exy_ph;
 W_F=exp(-(X.^2+Y.^2).^20/(1.3*d0/2/log(2)^(0.025))^40);
 %电场强度赋初值
 %--------------------------------------------------------------------------
-E_S_out=E_S0*pulsegenerator(x,y,t,t0,d0,1,1,0.5)/sqrt(S_R_index(num/2));
-E_P_out=E_P0*pulsegenerator(x,y,t,t0,d0,5,5,0)/sqrt(P_R_index);%.*exp(i*0.6*Exy_ph);
+E_S_out=E_S0*pulsegenerator(x,y,t,tao_ps,Ds,mxys,mts,chirp_s)/sqrt(S_R_index(num/2));
+E_P_out=E_P0*pulsegenerator(x,y,t,tao_pp,Dp,mxyp,mtp,chirp_p)/sqrt(P_R_index);%.*exp(i*0.6*Exy_ph);
 %--------------------------------------------------------------------------
 for k=1:nstep
-    E_P_out(k,:,:)=exp(i*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
+    E_P_out(k,:,:)=exp(1i*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
 end
 %画出信号光、闲置光初始时间波形
 figure(1) 
