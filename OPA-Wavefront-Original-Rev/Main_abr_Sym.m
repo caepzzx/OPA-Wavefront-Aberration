@@ -15,9 +15,14 @@ mts=1;                       %信号光时间分布阶数
 mtp=5;                       %泵浦光时间分布阶数
 mxys=1;                      %信号光空间分布阶数
 mxyp=5;                      %泵浦光空间分布阶数
+P_wavelength0=532e-9;         %泵浦光波长
+S_wavelength0=1053e-9;       %[zzx]信号光中心波长
 tao_ftl=30*1e-12;             %种子光时域 FWHM     
 tao_ps=40*1e-12;             %展宽后时域 FWHM   
-tao_pp=45*1e-12;            %泵浦光时域 FWHM
+tao_pp=45*1e-12;             %泵浦光时域 FWHM
+
+
+
 chirp_s=-sqrt((tao_ps/tao_ftl)^2-1); %线性啁啾高斯脉冲 半高全宽 Tmin=Tfwhm/sqrt(1+C^2)
 chirp_p=0;
 dt=tao_ftl/2^4;
@@ -49,8 +54,8 @@ y=linspace(-s*d0,s*d0,ny);  %y－坐标
 const_LBO;         
 %----------------
 zz=zeros(nstep+1,1);
-E_P_out=zeros(num,nx,ny);   %泵浦光电场强度
-E_S_out=zeros(num,nx,ny);   %信号光电场强度
+% E_P_out=zeros(num,nx,ny);   %泵浦光电场强度
+% E_S_out=zeros(num,nx,ny);   %信号光电场强度
 E_I_out=zeros(num,nx,ny);   %闲置光电场强度
 E_P_w=zeros(num,nx,ny);     %泵浦光电场频域表示
 E_S_w=zeros(num,nx,ny);     %信号光电场频域表示
@@ -71,8 +76,8 @@ bmy=zeros(1,num);
 v=zeros(nvar,nx,ny);
 sum_Es=zeros(nstep+1,1);
 sum_Ep=zeros(nstep+1,1);
-Is=zeros(num,nx,ny);
-Ip=zeros(num,nx,ny);
+% Is=zeros(num,nx,ny);
+% Ip=zeros(num,nx,ny);
 P=zeros(num,1);
 [X,Y]=meshgrid(x,y);
 % EXY=normrnd(1,0.0625,nx,ny);% EXY=cos(15*(X+Y)/d0)*pi*2;% EXY=normrnd(1,0.0625,nx,ny);%引入随机噪声
@@ -90,10 +95,26 @@ E_S_out=E_S0*pulsegenerator(x,y,t,tao_ps,Ds,mxys,mts,chirp_s)/sqrt(S_R_index(num
 E_P_out=E_P0*pulsegenerator(x,y,t,tao_pp,Dp,mxyp,mtp,chirp_p)/sqrt(P_R_index);%.*exp(i*0.6*Exy_ph);
 %--------------------------------------------------------------------------
 for k=1:nstep
-    E_P_out(k,:,:)=exp(i*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
+    E_P_out(k,:,:)=exp(1i*0.6*Exy_ph).*squeeze(E_P_out(k,:,:));
 end
+%画出信号光、闲置光和泵浦光的光谱
+Is=(1/2*c*S_R_index0*ele_c)*(E_S_out.*conj(E_S_out));
+Ii=(1/2*c*S_R_index0*ele_c)*(E_I_out.*conj(E_I_out));
+Ip=(1/2*c*P_R_index0*ele_c)*(E_P_out.*conj(E_P_out));
+
+h_spect=figure;
+subplot(311);
+plot(S_wavelength*1e9,Is(:,nx/2,ny/2)/max(Is(:,nx/2,ny/2)),'r.','LineWidth',1);
+hold on
+subplot(312);
+plot(I_wavelength*1e9,Ii(:,nx/2,ny/2)/max(Ii(:,nx/2,ny/2)),'g.','LineWidth',1);
+hold on
+subplot(313);
+plot(P_wavelength*1e9,Ip(:,nx/2,ny/2)/max(Ip(:,nx/2,ny/2)),'b.','LineWidth',1);
+hold on;
+
 %画出信号光、闲置光初始时间波形
-figure(1) 
+h1=figure; 
 subplot(2,2,1)
 I=(1/2*c*ele_c).*P_R_index*E_P_out(:,nx/2,ny/2).*conj(E_P_out(:,nx/2,ny/2));
 plot(t*1e9,I/max(I),'k','LineWidth',1);
@@ -228,7 +249,7 @@ z=z-h/2;
 zz(nstep+1)=z; 
 %--------------------------------------------------------------------------
 %画出放大后光斑中心处电场强度的时间波形
-figure(1)
+figure(h1)
 subplot(2,2,1)
 I=(abs(E_S_out(:,nx/2,ny/2))).^2*(1/2*c*ele_c).*S_R_index(:);
 plot(t*1e9,I/max(I),'b','LineWidth',1);
@@ -260,7 +281,7 @@ ylabel('Phase (pi)');
 title('Phase accumulated in OPA');
 hold on
 %画出参量作用后波前变化
-figure(2)
+h2=figure;
 subplot(2,2,1)
 title('空间强度调制');
 mesh(X*1e3,Y*1e3,Z)
@@ -274,6 +295,35 @@ mesh(X*1e3,Y*1e3,E.*W_F)
 subplot(2,2,4)
 E(:,:)=E_P_ph(nstep+1,:,:);
 mesh(X*1e3,Y*1e3,E.*W_F)
+
+
+Is=(1/2*c*S_R_index0*ele_c)*(E_S_out.*conj(E_S_out));
+Ii=(1/2*c*S_R_index0*ele_c)*(E_I_out.*conj(E_I_out));
+Ip=(1/2*c*P_R_index0*ele_c)*(E_P_out.*conj(E_P_out));
+
+figure(h_spect);
+subplot(311);
+plot(S_wavelength*1e9,Is(:,nx/2,ny/2)/max(Is(:,nx/2,ny/2)),'r','LineWidth',1);
+axis normal 
+% axis([0.8*S_wavelength0*1e9 1.2*S_wavelength0*1e9 0 inf]);
+xlabel('wavelength /nm');
+ylabel('Normalized Power');
+legend('Before OPA','After OPA');
+subplot(312);
+plot(I_wavelength*1e9,Ii(:,nx/2,ny/2)/max(Ii(:,nx/2,ny/2)),'g','LineWidth',1);
+axis normal 
+% axis([0.8*I_wavelength0*1e9 1.2*I_wavelength0*1e9 0 inf]);
+xlabel('wavelength /nm');
+ylabel('Normalized Power');
+legend('Before OPA','After OPA');
+subplot(313);
+plot(P_wavelength*1e9,Ip(:,nx/2,ny/2)/max(Ip(:,nx/2,ny/2)),'b','LineWidth',1);
+axis normal 
+% axis([0.8*P_wavelength0*1e9 1.2*P_wavelength0*1e9 0 inf]);
+xlabel('wavelength /nm');
+ylabel('Normalized Power');
+legend('Before OPA','After OPA');
+
 % 保存信号场
 save('data\E_S_out.mat','E_S_out');
 
