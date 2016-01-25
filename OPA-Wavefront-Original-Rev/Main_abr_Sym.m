@@ -104,13 +104,25 @@ Ip=(1/2*c*P_R_index0*ele_c)*(E_P_out.*conj(E_P_out));
 
 h_spect=figure;
 subplot(311);
-plot(S_wavelength*1e9,Is(:,nx/2,ny/2)/max(Is(:,nx/2,ny/2)),'r.','LineWidth',1);
+plot(S_wavelength*1e9,Is(:,nx/2,ny/2)/max(Is(:,nx/2,ny/2)),'r.-','LineWidth',1);
 hold on
 subplot(312);
-plot(I_wavelength*1e9,Ii(:,nx/2,ny/2)/max(Ii(:,nx/2,ny/2)),'g.','LineWidth',1);
+plot(I_wavelength*1e9,Ii(:,nx/2,ny/2)/max(Ii(:,nx/2,ny/2)),'g.-','LineWidth',1);
 hold on
 subplot(313);
-plot(P_wavelength*1e9,Ip(:,nx/2,ny/2)/max(Ip(:,nx/2,ny/2)),'b.','LineWidth',1);
+plot(P_wavelength*1e9,Ip(:,nx/2,ny/2)/max(Ip(:,nx/2,ny/2)),'b.-','LineWidth',1);
+hold on;
+
+
+h_fftspect=figure;
+subplot(311);
+plot(fftshift(omega)./(2.*pi),abs(fftshift(ifft(E_S_out(:,nx/2,ny/2))).*T/sqrt(2*pi)).^2,'r.-','LineWidth',1);
+hold on
+subplot(312);
+plot(fftshift(omega)./(2.*pi),abs(fftshift(ifft(E_I_out(:,nx/2,ny/2))).*T/sqrt(2*pi)).^2,'g.-','LineWidth',1);
+hold on
+subplot(313);
+plot(fftshift(omega)./(2.*pi),abs(fftshift(ifft(E_P_out(:,nx/2,ny/2))).*T/sqrt(2*pi)).^2,'b.-','LineWidth',1);
 hold on;
 
 %画出信号光、闲置光初始时间波形
@@ -303,25 +315,48 @@ Ip=(1/2*c*P_R_index0*ele_c)*(E_P_out.*conj(E_P_out));
 
 figure(h_spect);
 subplot(311);
-plot(S_wavelength*1e9,Is(:,nx/2,ny/2)/max(Is(:,nx/2,ny/2)),'r','LineWidth',1);
+plot(S_wavelength*1e9,Is(:,nx/2,ny/2)/max(Is(:,nx/2,ny/2)),'b','LineWidth',1);
 axis normal 
 % axis([0.8*S_wavelength0*1e9 1.2*S_wavelength0*1e9 0 inf]);
 xlabel('wavelength /nm');
 ylabel('Normalized Power');
 legend('Before OPA','After OPA');
 subplot(312);
-plot(I_wavelength*1e9,Ii(:,nx/2,ny/2)/max(Ii(:,nx/2,ny/2)),'g','LineWidth',1);
+plot(I_wavelength*1e9,Ii(:,nx/2,ny/2)/max(Ii(:,nx/2,ny/2)),'r','LineWidth',1);
 axis normal 
 % axis([0.8*I_wavelength0*1e9 1.2*I_wavelength0*1e9 0 inf]);
 xlabel('wavelength /nm');
 ylabel('Normalized Power');
 legend('Before OPA','After OPA');
 subplot(313);
-plot(P_wavelength*1e9,Ip(:,nx/2,ny/2)/max(Ip(:,nx/2,ny/2)),'b','LineWidth',1);
+plot(P_wavelength*1e9,Ip(:,nx/2,ny/2)/max(Ip(:,nx/2,ny/2)),'g','LineWidth',1);
 axis normal 
 % axis([0.8*P_wavelength0*1e9 1.2*P_wavelength0*1e9 0 inf]);
 xlabel('wavelength /nm');
 ylabel('Normalized Power');
+legend('Before OPA','After OPA');
+
+
+
+figure(h_fftspect);
+subplot(311);
+plot(fftshift(omega)./(2.*pi),abs(fftshift(ifft(E_S_out(:,nx/2,ny/2))).*T/sqrt(2*pi)).^2,'b','LineWidth',1);
+axis normal 
+xlabel('Normalized Frequency');
+ylabel('Spectral Power');
+legend('Before OPA','After OPA');
+title('Spectrum of Fourier Transform')
+subplot(312);
+plot(fftshift(omega)./(2.*pi),abs(fftshift(ifft(E_I_out(:,nx/2,ny/2))).*T/sqrt(2*pi)).^2,'r','LineWidth',1);
+axis normal 
+xlabel('Normalized Frequency');
+ylabel('Spectral Power');
+legend('Before OPA','After OPA');
+subplot(313);
+plot(fftshift(omega)./(2.*pi),abs(fftshift(ifft(E_P_out(:,nx/2,ny/2))).*T/sqrt(2*pi)).^2,'g','LineWidth',1);
+axis normal 
+xlabel('Normalized Frequency');
+ylabel('Spectral Power');
 legend('Before OPA','After OPA');
 
 % 保存信号场
